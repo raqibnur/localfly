@@ -1,0 +1,31 @@
+# Localfly relay: a bore server, with Caddy in front for HTTPS.
+# Usage: copy .env.example to .env, edit Caddyfile, then `docker compose up -d`.
+# Linux host networking is used because bore opens one port per tunnel.
+services:
+  bore:
+    image: ekzhang/bore:0.6.0
+    command:
+      - server
+      - --bind-tunnels
+      - ${BIND_TUNNELS:-127.0.0.1}
+      - --min-port
+      - "${MIN_PORT:-40000}"
+      - --max-port
+      - "${MAX_PORT:-40100}"
+    environment:
+      BORE_SECRET: ${BORE_SECRET:?Set BORE_SECRET in .env}
+    network_mode: host
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2
+    network_mode: host
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:

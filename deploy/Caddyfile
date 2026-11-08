@@ -1,0 +1,11 @@
+# One block per app. Caddy fetches and renews the HTTPS certificate for each name.
+# The port must match the app's "Public port" in Localfly (inside MIN_PORT–MAX_PORT).
+# Each name needs a DNS A record pointing at this server.
+
+web.example.com {
+	reverse_proxy 127.0.0.1:40001
+}
+
+# api.example.com {
+# 	reverse_proxy 127.0.0.1:40002
+# }

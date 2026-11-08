@@ -1,0 +1,43 @@
+name: Localfly
+options:
+  bundleIdPrefix: com.raqibnur
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+packages:
+  LocalflyCore:
+    path: LocalflyCore
+settings:
+  base:
+    MARKETING_VERSION: 0.1.0
+    CURRENT_PROJECT_VERSION: 1
+    SWIFT_VERSION: "6.0"
+targets:
+  Localfly:
+    type: application
+    platform: macOS
+    sources: [App]
+    dependencies:
+      - package: LocalflyCore
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: Localfly
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.developer-tools
+        LSMinimumSystemVersion: "13.0"
+        LSUIElement: true
+        NSHumanReadableCopyright: "© 2026 Raqib Nur. MIT License."
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.raqibnur.localfly
+        PRODUCT_NAME: Localfly
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        DEVELOPMENT_TEAM: ""
+        COMBINE_HIDPI_IMAGES: YES
+    scheme:
+      testTargets: []

@@ -1,0 +1,28 @@
+name: Bug report
+description: Something isn't working
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Localfly version
+      placeholder: "0.1.0 (from About)"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "15.2"
+  - type: dropdown
+    id: relay
+    attributes:
+      label: Relay
+      options: [bore.pub, Self-hosted bore server]
