@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/raqibnur/localfly/releases/latest/download/Localfly.dmg"><b>Download for Mac</b></a> ·
-  <a href="https://raqibnur.github.io/localfly/">Website</a> ·
+  <a href="https://localfly.raqibnur.com/">Website</a> ·
   <a href="docs/self-hosting.md">Self-hosting</a> ·
   <a href="https://raqibnur.gumroad.com/coffee">Buy me a coffee</a>
 </p>
@@ -44,7 +44,7 @@ By default it uses **bore.pub**, a free public relay. Addresses look like `http:
 
 ## Localfly Pro?
 
-Localfly is free and stays free. I'm considering a hosted Pro version: instant `https://yourapp.localfly.dev` addresses with no server to run, custom domains, a request inspector and protected links. If you'd use it, [join the waitlist](https://raqibnur.github.io/localfly/#pro). It only gets built if enough people want it.
+Localfly is free and stays free. I'm considering a hosted Pro version: instant `https://yourapp.localfly.dev` addresses with no server to run, custom domains, a request inspector and protected links. If you'd use it, [join the waitlist](https://localfly.raqibnur.com/#pro). It only gets built if enough people want it.
 
 ## Build from source
 
