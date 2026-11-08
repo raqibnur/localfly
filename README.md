@@ -13,7 +13,7 @@
   <a href="https://github.com/raqibnur/localfly/releases/latest/download/Localfly.dmg"><b>Download for Mac</b></a> ·
   <a href="https://raqibnur.github.io/localfly/">Website</a> ·
   <a href="docs/self-hosting.md">Self-hosting</a> ·
-  <a href="https://github.com/sponsors/raqibnur">Sponsor</a>
+  <a href="https://raqibnur.gumroad.com/coffee">Buy me a coffee</a>
 </p>
 
 <p align="center">
@@ -93,7 +93,7 @@ Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Re
 
 ## Support
 
-If Localfly saves you time, [sponsoring on GitHub](https://github.com/sponsors/raqibnur) helps keep it maintained.
+If Localfly saves you time, [buy me a coffee](https://raqibnur.gumroad.com/coffee). It helps keep the project maintained.
 
 ## License
 

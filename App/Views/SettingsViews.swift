@@ -165,7 +165,7 @@ struct AboutView: View {
                 }
                 .padding(.top, 36)
 
-                SponsorCard()
+                SupportCard()
                     .frame(maxWidth: 520)
 
                 VStack(alignment: .leading, spacing: 10) {
@@ -220,22 +220,22 @@ enum Licenses {
     """
 }
 
-/// Asks for GitHub Sponsors support. Free and open source stays the default; this is optional.
-struct SponsorCard: View {
+/// Optional tip jar. Free and open source stays the default.
+struct SupportCard: View {
     var body: some View {
         HStack(spacing: 14) {
-            Image(systemName: "heart.fill")
-                .font(.system(size: 18))
-                .foregroundStyle(Color(red: 0.92, green: 0.30, blue: 0.55))
+            Image(systemName: "cup.and.saucer.fill")
+                .font(.system(size: 16))
+                .foregroundStyle(Color(red: 0.80, green: 0.52, blue: 0.25))
                 .frame(width: 40, height: 40)
-                .background(Circle().fill(Color(red: 0.92, green: 0.30, blue: 0.55).opacity(0.14)))
+                .background(Circle().fill(Color(red: 0.80, green: 0.52, blue: 0.25).opacity(0.16)))
             VStack(alignment: .leading, spacing: 3) {
                 Text("Free and open source").font(.system(size: 13, weight: .semibold))
-                Text("If Localfly saves you time, sponsoring keeps it maintained.")
+                Text("If Localfly saves you time, a coffee helps keep it maintained.")
                     .font(.system(size: 12)).foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
-            Link(destination: Links.sponsor) { Text("Sponsor") }
+            Link(destination: Links.coffee) { Text("Buy me a coffee") }
                 .buttonStyle(.bordered)
         }
         .padding(16)
