@@ -1,5 +1,5 @@
 # One block per app. Caddy fetches and renews the HTTPS certificate for each name.
-# The port must match the app's "Public port" in Localfly (inside MIN_PORT–MAX_PORT).
+# The port must match the app's "Public port" in Localfly Linux (inside MIN_PORT–MAX_PORT).
 # Each name needs a DNS A record pointing at this server.
 
 web.example.com {

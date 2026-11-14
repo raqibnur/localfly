@@ -1,100 +1,206 @@
-<p align="center">
-  <img src="site/assets/icon.png" width="96" height="96" alt="">
-</p>
-
-<h1 align="center">Localfly</h1>
+# Localfly Linux
 
 <p align="center">
-  Your localhost, on the internet.<br>
-  A free, open-source Mac menu bar app that gives any app on your Mac a public link.
+  <img src="packaging/icons/localfly.png" width="96" height="96" alt="Localfly Linux logo">
 </p>
 
-<p align="center">
-  <a href="https://github.com/raqibnur/localfly/releases/latest/download/Localfly.dmg"><b>Download for Mac</b></a> ·
-  <a href="https://localfly.raqibnur.com/">Website</a> ·
-  <a href="docs/self-hosting.md">Self-hosting</a> ·
-  <a href="https://raqibnur.gumroad.com/coffee">Buy me a coffee</a>
-</p>
-
-<p align="center">
-  <img src="docs/images/app.png" width="760" alt="The Localfly window with three saved apps, one of them live at a bore.pub address">
-</p>
-
-## What it does
+Your localhost, on the internet. A free, open-source app that gives any app on your Linux machine a public link - an Adwaita window + system tray, like the macOS menu bar app, over a Rust tunnel engine.
 
 Save an app by its port, flip the switch, and share the address. Test your site on your phone, show work to a client, or receive webhooks, all without deploying anything.
 
-- **Menu bar first**: every app, its status and a copy button, one click away. Closing the window keeps tunnels running.
-- **Knows what's running**: a dot shows whether your dev server is up, and Localfly won't open a tunnel to an empty port.
+- **Window + tray first**: every app, its status and a copy button, one click away. Closing the window keeps tunnels running.
+- **Knows what's running**: a dot shows whether your dev server is up, and Localfly Linux won't open a tunnel to an empty port.
 - **Spots dev servers**: common ports like `:3000` and `:5173` show up ready to add.
-- **Live traffic**: uptime, connections and bytes in and out for each tunnel.
-- **Reconnects by itself** after Wi-Fi drops or sleep, and asks for the same address back.
+- **Live traffic**: bytes in and out for each tunnel.
+- **Reconnects by itself** after Wi-Fi drops, and asks for the same address back.
 - **HTTPS on your own domain** when you [run your own relay](docs/self-hosting.md).
-- **Private by default**: nothing is exposed until you switch it on. No account and no analytics. The relay secret is kept in your keychain.
+- **Private by default**: nothing is exposed until you switch it on. No account, no analytics. The relay secret lives in a `0600` file.
 
-Requires macOS 13 or later, on Apple silicon or Intel.
+Localfly Linux speaks the [bore](https://github.com/ekzhang/bore) tunnel protocol (v0.6). Your machine opens an outgoing connection to a relay server. When someone visits the public address, the relay passes the connection through to your machine. Nothing on your router or firewall changes.
 
-## How it works
-
-Localfly speaks the [bore](https://github.com/ekzhang/bore) tunnel protocol. Your Mac opens an outgoing connection to a relay server. When someone visits the public address, the relay passes the connection through to your machine. Nothing on your router or firewall changes.
-
-By default it uses **bore.pub**, a free public relay. Addresses look like `http://bore.pub:43228` and change each time a tunnel opens. For stable `https://` addresses on your own domain, set up your own relay with [the self-hosting guide](docs/self-hosting.md). It takes one `docker compose up` on a $5 server.
+By default it uses **bore.pub**, a free public relay. For stable `https://` addresses on your own domain, set up your own relay with [the self-hosting guide](docs/self-hosting.md).
 
 > **Heads-up:** anyone with a tunnel's address can reach that app while it's on. Only share what you mean to share.
 
-## Localfly Pro?
+<p align="center">
+  <img src="docs/images/app.png" width="760" alt="The Localfly Linux window with one saved app, live at a bore.pub address">
+</p>
 
-Localfly is free and stays free. I'm considering a hosted Pro version: instant `https://yourapp.localfly.dev` addresses with no server to run, custom domains, a request inspector and protected links. If you'd use it, [join the waitlist](https://localfly.raqibnur.com/#pro). It only gets built if enough people want it.
+## Install
 
-## Build from source
-
-```bash
-brew install xcodegen
-git clone https://github.com/raqibnur/localfly.git && cd localfly
-xcodegen generate && open Localfly.xcodeproj
-```
-
-```
-LocalflyCore/   Swift package: the tunnel engine (bore protocol over Network.framework), no UI
-App/            SwiftUI app: menu bar panel and main window, a thin layer over TunnelManager
-deploy/         Relay for self-hosting: bore server + Caddy (docker compose)
-site/           Website (GitHub Pages)
-scripts/        build.sh (.app + .dmg), notarize.sh, make-icon.swift
-```
-
-Tests run against a real bore server on 127.0.0.1 and are skipped when `bore` isn't installed:
+One-liner (user-local, no root):
 
 ```bash
-cargo install bore-cli
-swift test --package-path LocalflyCore
+curl -fsSL https://raw.githubusercontent.com/9M2PJU/localfly-linux/main/install.sh | sh
 ```
 
-### Release
+Or pick your distro:
+
+| Method | Command |
+|---|---|
+| Arch (AUR, prebuilt) | `yay -S localfly-linux-bin` (or `localfly-linux-git` to build from source) |
+| Debian/Ubuntu (.deb) | download `localfly-linux_*.deb` from [releases](https://github.com/9M2PJU/localfly-linux/releases) then `sudo apt install ./localfly-linux_*.deb` |
+| Fedora/RHEL (.rpm) | download `localfly-linux-*.rpm` from [releases](https://github.com/9M2PJU/localfly-linux/releases) then `sudo dnf install ./localfly-linux-*.rpm` |
+| Any distro (AppImage) | download `Localfly-*.AppImage` from [releases](https://github.com/9M2PJU/localfly-linux/releases), `chmod +x`, run |
+| From source | `cargo install --path .` |
+
+### Arch Linux
 
 ```bash
-scripts/build.sh   # universal, ad-hoc signed: dist/Localfly.app + dist/Localfly.dmg
+yay -S localfly-linux-bin   # prebuilt, fast
+# or: yay -S localfly-linux-git  # builds from git main
 ```
+
+No AUR helper? Grab `localfly-linux-bin-*.pkg.tar.zst` from
+[releases](https://github.com/9M2PJU/localfly-linux/releases) and:
 
 ```bash
-DEVELOPER_ID="Developer ID Application: Name (TEAMID)" NOTARY_PROFILE=localfly scripts/notarize.sh
+sudo pacman -U ./localfly-linux-bin-*.pkg.tar.zst
 ```
 
-Or let Xcode handle signing with the Apple ID signed in under Xcode → Settings → Accounts. Xcode creates a cloud-managed Developer ID certificate, notarizes and staples the app, and you need no passwords:
+Or build manually:
 
 ```bash
-TEAM_ID=YOURTEAMID scripts/notarize-xcode.sh
+git clone https://aur.archlinux.org/localfly-linux-bin.git  # or localfly-linux-git
+cd localfly-linux-bin
+makepkg -si
 ```
 
-`notarize.sh` signs, notarizes and staples the DMG. It also accepts `APPLE_ID`, `APPLE_TEAM_ID` and `APPLE_APP_PASSWORD` in place of a keychain profile. Upload `dist/Localfly.dmg` to a GitHub release tagged `vX.Y.Z`, and the app tells users that an update is available.
+This installs the CLI (`localfly`), the daemon (`localflyd`), the GUI launcher
+(`localfly-gui`), shell completions, man pages, the desktop entry, the official
+icon, and the systemd user unit.
+Start the GUI from your app menu, or run `localfly-gui` from a terminal.
+Optional: enable tunnels at login from the app's General page
+(which enables `localfly.service --user`), or manually:
+
+```bash
+systemctl --user enable --now localfly.service
+```
+
+Requires a C toolchain + cargo for source builds (Arch: `pacman -S rust`; Debian: `apt install cargo`).
+For headless servers without a keyring, build file-only (skips half the
+dependency tree): `cargo install --path . --no-default-features`.
+The GUI additionally needs `python3-gi` + GTK4 + libadwaita
+(Arch: `python-gobject gtk4 libadwaita`; Debian: `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1`).
+
+## GUI (window + tray)
+
+```bash
+# system packages (Arch; Debian: python3-gi gir1.2-gtk-4.0 gir1.2-adw-1)
+sudo pacman -S --needed python-gobject gtk4 libadwaita
+cargo install --path .   # installs `localfly` + `localflyd`; the GUI drives the daemon
+
+./gui/localfly-gui
+```
+
+The window mirrors the macOS app: sidebar (Apps / Relay / General / About),
+app cards with on/off switches, URL copy + open buttons, a QR code button for
+showing the address on your phone, live stats, add/edit dialogs, relay
+settings (server, secret, latency check) and start-on-login via a systemd user
+unit. Closing the window keeps tunnels running; Quit stops them.
+Desktop notifications tell you when a tunnel goes live or fails.
+
+The tray uses StatusNotifierItem, so it shows in KDE, sway/waybar and GNOME
+(with the AppIndicator extension). Its icon turns green while a tunnel is
+live. Left-click toggles the window, right-click opens the menu:
+per-app toggles, Open, Quit.
+
+Install the binaries and launcher:
+
+```bash
+install -Dm755 target/release/localfly ~/.local/bin/localfly
+install -Dm755 target/release/localflyd ~/.local/bin/localflyd
+install -Dm755 gui/localfly-gui ~/.local/bin/localfly-gui
+install -Dm644 com.localfly.Localfly.desktop ~/.local/share/applications/com.localfly.Localfly.desktop
+```
+
+Shell completions and man pages live in `packaging/generated/` (built by
+`cargo run --example gen_assets`); distro packages install them for you.
+
+## CLI use (headless / scripting)
+
+A `localflyd` daemon owns every tunnel; the CLI (and the GUI) are thin
+clients that talk to it over a same-UID Unix socket. The daemon auto-spawns
+on first use and exits by itself after 10 idle minutes.
+
+```bash
+localfly add --name web --port 3000
+localfly on web                 # follows status; Ctrl-C detaches (tunnel keeps running)
+localfly off web                # stop it (or: localfly off --all)
+localfly expose 5173 --relay bore.pub   # one-shot, foreground; Ctrl-C stops it
+
+localfly edit web --public-port 40001
+localfly config --relay example.com:7835 --secret "$BORE_SECRET"
+localfly up                     # start every start-on-launch app (SIGTERM stops all)
+
+localfly list                   # saved apps with live status
+localfly status                 # live tunnels + traffic (add --json to script it)
+localfly scan                   # common dev ports: 3000, 5173, 8000, …
+localfly probe 3000
+localfly relay-status
+localfly update-check
+```
+
+`on` refuses empty ports (`Nothing running on :3000`). `up` skips apps with nothing listening.
+
+## Where things live
+
+| Setting | Location |
+|---|---|
+| Saved apps | `~/.config/localfly/apps.json` (`$LOCALFLY_CONFIG` overrides; owned by `localflyd`) |
+| Daemon socket | `$XDG_RUNTIME_DIR/localfly.sock` (`$LOCALFLY_SOCKET` overrides) |
+| Relay secret | GNOME Keychain / KWallet when available, else `~/.config/localfly/secret` mode `0600` (`$LOCALFLY_SECRET` env wins) |
+| Relay / auto-reconnect | `~/.config/localfly/config.json` via `localfly config` |
+| Start on login | `localfly.service` → `systemctl --user enable --now` (runs `localfly up`) |
+| Copy / open URL | stdout URL (pipe to `wl-copy`/`xclip`, open with `xdg-open`); QR button in the GUI |
+
+## Self-hosting
+
+See [docs/self-hosting.md](docs/self-hosting.md). In short: run the relay in `deploy/` (`bore server` on `7835` + Caddy), then `localfly config --relay my.example.com --secret "$BORE_SECRET"`.
+
+## Verify
+
+```bash
+cargo test
+```
+
+7 unit tests (bore protocol vectors, keyring fallback) + 4 live-relay tunnel
+tests + 3 daemon protocol tests (CRUD, traffic, subscribe stream,
+idle-exit) against a real `bore server` 0.6.0 on `127.0.0.1:7835`,
+covering traffic round-trip, secret auth, fixed ports, and
+unreachable-relay errors. GUI backend: `python3 -m unittest discover -s gui/tests`.
+
+## Project layout
+
+```text
+src/            tunnel engine (bore protocol over tokio) + CLI + localflyd
+src/bin/        localfly (CLI) and localflyd (tunnel daemon, Unix socket)
+gui/            Adwaita window + StatusNotifierItem tray (drives the daemon)
+packaging/      nfpm (.deb/.rpm), AppStream metainfo, icons, AUR sources,
+                generated shell completions + man pages
+tests/          live-relay integration tests (daemon + engine)
+deploy/         relay for self-hosting: bore server + Caddy (docker compose)
+docs/           self-hosting guide, screenshots
+```
 
 ## Contributing
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately as described in [SECURITY.md](SECURITY.md).
 
-## Support
-
-If Localfly saves you time, [buy me a coffee](https://raqibnur.gumroad.com/coffee). It helps keep the project maintained.
+Maintained by [9M2PJU](https://hamradio.my). Original macOS app by [Raqib Nur](https://github.com/raqibnur) ([raqibnur/localfly](https://github.com/raqibnur/localfly)).
 
 ## License
 
-[MIT](LICENSE) © 2026 Raqib Nur. Localfly is compatible with bore by Eric Zhang (MIT), and its license notice appears in the app's About page.
+[MIT](LICENSE) - © Raqib Nur for the original app; Linux port contributions under the same license.
+
+## Donate
+
+If Localfly Linux saves you time, consider supporting the maintainer:
+
+<p align="center">
+  <img src="docs/images/donation-qr.png" width="220" alt="Donation QR code">
+</p>
+
+- [Buy me a coffee](https://www.buymeacoffee.com/9m2pju)
+- [PayPal](https://paypal.me/9M2PJU)
+- [Wise](https://wise.com/pay/me/faizulz13)

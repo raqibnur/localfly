@@ -1,0 +1,24 @@
+pkgbase = localfly-linux-bin
+	pkgdesc = Your localhost, on the internet - bore tunnels with an Adwaita window + tray (prebuilt)
+	pkgver = 0.1.1
+	pkgrel = 1
+	url = https://github.com/9M2PJU/localfly-linux
+	arch = x86_64
+	arch = aarch64
+	license = MIT
+	depends = python-gobject
+	depends = gtk4
+	depends = libadwaita
+	depends = curl
+	depends = hicolor-icon-theme
+	optdepends = qrencode: QR codes for phone testing
+	optdepends = libsecret: GNOME Keyring secret storage
+	provides = localfly-linux
+	conflicts = localfly-linux
+	conflicts = localfly-linux-git
+	source_x86_64 = localfly-v0.1.1-x86_64-unknown-linux-gnu.tar.gz::https://github.com/9M2PJU/localfly-linux/releases/download/v0.1.1/localfly-v0.1.1-x86_64-unknown-linux-gnu.tar.gz
+	sha256sums_x86_64 = 992aed25b74e8d5062367d260a30feb4ea089c5a5c02b5a4d7e053c6e2877ed8
+	source_aarch64 = localfly-v0.1.1-aarch64-unknown-linux-gnu.tar.gz::https://github.com/9M2PJU/localfly-linux/releases/download/v0.1.1/localfly-v0.1.1-aarch64-unknown-linux-gnu.tar.gz
+	sha256sums_aarch64 = ad7511618a13bff374eb8f3b35a288502b3a65132cbb77c5ac3f0abd62854400
+
+pkgname = localfly-linux-bin

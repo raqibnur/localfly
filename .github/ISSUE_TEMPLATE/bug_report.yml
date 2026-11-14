@@ -12,15 +12,15 @@ body:
   - type: input
     id: version
     attributes:
-      label: Localfly version
-      placeholder: "0.1.0 (from About)"
+      label: Localfly Linux version
+      placeholder: "0.1.0 (from localfly --version)"
     validations:
       required: true
   - type: input
-    id: macos
+    id: distro
     attributes:
-      label: macOS version
-      placeholder: "15.2"
+      label: Linux distro and version
+      placeholder: "Arch / Ubuntu 24.04"
   - type: dropdown
     id: relay
     attributes:

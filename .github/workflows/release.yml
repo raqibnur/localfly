@@ -1,0 +1,123 @@
+name: Release (Linux)
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runner: ubuntu-latest
+            bore_arch: x86_64-unknown-linux-musl
+          - target: aarch64-unknown-linux-gnu
+            runner: ubuntu-24.04-arm
+            bore_arch: aarch64-unknown-linux-musl
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Install bore for integration tests
+        run: |
+          curl -sSL https://github.com/ekzhang/bore/releases/download/v0.6.0/bore-v0.6.0-${{ matrix.bore_arch }}.tar.gz | sudo tar -xz -C /usr/local/bin bore
+          bore --version
+      - name: Test
+        run: cargo test --locked --target ${{ matrix.target }}
+      - name: Build release
+        run: cargo build --locked --release --target ${{ matrix.target }}
+      - name: Generate shell completions and man pages
+        run: cargo run --quiet --example gen_assets
+      - name: Package
+        run: |
+          PKG="localfly-${GITHUB_REF_NAME}-${{ matrix.target }}"
+          mkdir -p "$PKG/gui" "$PKG/completions"
+          cp "target/${{ matrix.target }}/release/localfly" "$PKG/"
+          cp "target/${{ matrix.target }}/release/localflyd" "$PKG/"
+          cp gui/localfly_gui.py gui/localfly_backend.py gui/sni.py gui/localfly-gui "$PKG/gui/"
+          cp -r packaging/generated/completions "$PKG/"
+          cp -r packaging/generated/man "$PKG/"
+          cp packaging/com.localfly.Localfly.metainfo.xml "$PKG/"
+          cp packaging/icons/localfly.png packaging/icons/localfly-48.png "$PKG/"
+          cp packaging/icons/localfly-live.png packaging/icons/localfly-live-48.png "$PKG/"
+          cp localfly.service com.localfly.Localfly.desktop README.md LICENSE "$PKG/"
+          tar -czf "$PKG.tar.gz" "$PKG"
+          echo "PKG=$PKG.tar.gz" >> "$GITHUB_ENV"
+      - name: Stamp package version from tag
+        run: |
+          sed -i -E "s/^version: .*/version: \"${GITHUB_REF_NAME#v}\"/" packaging/nfpm.yaml
+          grep -E "^version:" packaging/nfpm.yaml
+      - name: Install nfpm
+        run: |
+          case "${{ matrix.target }}" in
+            x86_64*) NFPM_ARCH=x86_64 ;;
+            aarch64*) NFPM_ARCH=arm64 ;;
+          esac
+          echo "NFPM_ARCH=$NFPM_ARCH" >> "$GITHUB_ENV"
+          curl -fsSL -o /tmp/nfpm.tar.gz "https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_Linux_${NFPM_ARCH}.tar.gz"
+          tar -xzf /tmp/nfpm.tar.gz -C /tmp nfpm
+      - name: Build .deb/.rpm/.pkg.tar.zst
+        run: |
+          mkdir -p dist
+          /tmp/nfpm package --config packaging/nfpm.yaml --packager deb --target dist/
+          /tmp/nfpm package --config packaging/nfpm.yaml --packager rpm --target dist/
+          /tmp/nfpm package --config packaging/nfpm.yaml --packager archlinux --target dist/
+          ls dist/
+      - name: Build AppImage
+        run: |
+          case "${{ matrix.target }}" in
+            x86_64*) APPARCH=x86_64 ;;
+            aarch64*) APPARCH=aarch64 ;;
+          esac
+          curl -fsSL -o appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${APPARCH}.AppImage"
+          chmod +x appimagetool.AppImage
+          ./appimagetool.AppImage --appimage-extract >/dev/null
+          rm -rf AppDir && mkdir -p AppDir/usr/bin
+          cp "target/${{ matrix.target }}/release/localfly" AppDir/usr/bin/
+          cp packaging/icons/localfly.png AppDir/localfly.png
+          cp packaging/localfly-cli.desktop AppDir/localfly.desktop
+          cp packaging/AppRun AppDir/AppRun
+          chmod +x AppDir/AppRun
+          mkdir -p dist
+          ARCH=$APPARCH ./squashfs-root/AppRun AppDir "dist/Localfly-${GITHUB_REF_NAME}-${APPARCH}.AppImage"
+          ls dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.PKG }}-plus-packages
+          path: |
+            ${{ env.PKG }}.tar.gz
+            dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          # dist/ holds only release files (tarballs + distro packages).
+          files: dist/*
+          generate_release_notes: true
+      - name: Keep only the latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --json tagName,isLatest \
+            --jq -r '.[] | select(.isLatest | not) | .tagName' |
+          while read -r tag; do
+            if [ -n "$tag" ]; then
+              gh release delete "$tag" --yes
+              git push origin ":refs/tags/$tag" || true
+            fi
+          done

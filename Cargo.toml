@@ -1,0 +1,48 @@
+[package]
+name = "localfly"
+version = "0.1.1"
+edition = "2021"
+description = "Localfly Linux: expose localhost over bore tunnels (port of the macOS app)"
+license = "MIT"
+authors = ["9M2PJU"]
+homepage = "https://hamradio.my"
+repository = "https://github.com/9M2PJU/localfly-linux"
+
+[lib]
+name = "localfly_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "localfly"
+path = "src/main.rs"
+
+[[bin]]
+name = "localflyd"
+path = "src/bin/localflyd.rs"
+
+[profile.release]
+strip = true
+lto = true
+
+[dependencies]
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "net", "process", "signal", "sync", "time", "io-util"] }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+hmac = "0.12"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4", "serde"] }
+dirs = "6"
+secret-service = { version = "5.2.0", features = ["rt-tokio-crypto-rust"], optional = true }
+
+[dev-dependencies]
+anyhow = "1.0.104"
+clap_complete = "4.6.11"
+clap_mangen = "0.3.3"
+fs2 = "0.4.3"
+serial_test = "4.0.1"
+tokio = { version = "1", features = ["macros", "rt", "rt-multi-thread", "net", "process", "signal", "sync", "time", "io-util"] }
+
+[features]
+default = ["keyring"]
+keyring = ["dep:secret-service"]

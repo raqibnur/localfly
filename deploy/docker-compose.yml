@@ -1,4 +1,4 @@
-# Localfly relay: a bore server, with Caddy in front for HTTPS.
+# Localfly Linux relay: a bore server, with Caddy in front for HTTPS.
 # Usage: copy .env.example to .env, edit Caddyfile, then `docker compose up -d`.
 # Linux host networking is used because bore opens one port per tunnel.
 services:

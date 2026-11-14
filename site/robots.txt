@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://localfly.raqibnur.com/sitemap.xml
