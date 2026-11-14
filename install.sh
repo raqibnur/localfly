@@ -41,6 +41,11 @@ uninstall() {
   rm -f "$BIN/localfly" "$BIN/localflyd" "$BIN/localfly-gui"
   rm -rf "$SHARE/localfly"
   rm -f "$SHARE/applications/com.localfly.Localfly.desktop" "$SHARE/icons/hicolor/256x256/apps/localfly.png" "$SHARE/icons/hicolor/256x256/apps/localfly-live.png"
+  rm -f "$SHARE/metainfo/com.localfly.Localfly.metainfo.xml"
+  rm -f "$SHARE/bash-completion/completions/localfly" "$SHARE/bash-completion/completions/localflyd"
+  rm -f "$SHARE/zsh/site-functions/_localfly" "$SHARE/zsh/site-functions/_localflyd"
+  rm -f "$HOME/.config/fish/completions/localfly.fish" "$HOME/.config/fish/completions/localflyd.fish"
+  rm -f "$SHARE/man/man1/localfly.1" "$SHARE/man/man1/localflyd.1"
   echo "Localfly Linux removed from $PREFIX."
 }
 
@@ -100,6 +105,21 @@ for _icon in localfly localfly-live; do
       && as_root install -Dm644 "$TMP/icon.png" "$SHARE/icons/hicolor/256x256/apps/${_icon}.png" || true
   fi
 done
+if [ -f "$PKGDIR/com.localfly.Localfly.metainfo.xml" ]; then
+  as_root install -Dm644 "$PKGDIR/com.localfly.Localfly.metainfo.xml" "$SHARE/metainfo/com.localfly.Localfly.metainfo.xml"
+fi
+if [ -d "$PKGDIR/completions" ]; then
+  as_root install -Dm644 "$PKGDIR/completions/localfly.bash" "$SHARE/bash-completion/completions/localfly" || true
+  as_root install -Dm644 "$PKGDIR/completions/localflyd.bash" "$SHARE/bash-completion/completions/localflyd" || true
+  as_root install -Dm644 "$PKGDIR/completions/_localfly" "$SHARE/zsh/site-functions/_localfly" || true
+  as_root install -Dm644 "$PKGDIR/completions/_localflyd" "$SHARE/zsh/site-functions/_localflyd" || true
+  as_root install -Dm644 "$PKGDIR/completions/localfly.fish" "$HOME/.config/fish/completions/localfly.fish" || true
+  as_root install -Dm644 "$PKGDIR/completions/localflyd.fish" "$HOME/.config/fish/completions/localflyd.fish" || true
+fi
+if [ -d "$PKGDIR/man" ]; then
+  as_root install -Dm644 "$PKGDIR/man/localfly.1" "$SHARE/man/man1/localfly.1" || true
+  as_root install -Dm644 "$PKGDIR/man/localflyd.1" "$SHARE/man/man1/localflyd.1" || true
+fi
 echo "GUI installed (requires: python3-gi gir1.2-gtk-4.0 gir1.2-adw-1)."
 
 echo "Done. Make sure $BIN is on your PATH, then run: localfly --help"
