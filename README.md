@@ -66,8 +66,9 @@ cd localfly-linux-bin
 makepkg -si
 ```
 
-This installs the CLI (`localfly`), the GUI launcher (`localfly-gui`),
-the desktop entry, the official icon, and the systemd user unit.
+This installs the CLI (`localfly`), the daemon (`localflyd`), the GUI launcher
+(`localfly-gui`), shell completions, man pages, the desktop entry, the official
+icon, and the systemd user unit.
 Start the GUI from your app menu, or run `localfly-gui` from a terminal.
 Optional: enable tunnels at login from the app's General page
 (which enables `localfly.service --user`), or manually:
@@ -85,56 +86,71 @@ The GUI additionally needs `python3-gi` + GTK4 + libadwaita
 ```bash
 # system packages (Arch; Debian: python3-gi gir1.2-gtk-4.0 gir1.2-adw-1)
 sudo pacman -S --needed python-gobject gtk4 libadwaita
-cargo install --path .   # provides the `localfly` backend the GUI drives
+cargo install --path .   # installs `localfly` + `localflyd`; the GUI drives the daemon
 
 ./gui/localfly-gui
 ```
 
 The window mirrors the macOS app: sidebar (Apps / Relay / General / About),
-app cards with on/off switches, URL copy + open buttons, live status, add/edit
-dialogs, relay settings (server, secret, latency check) and start-on-login via
-a systemd user unit. Closing the window keeps tunnels running; Quit stops them.
+app cards with on/off switches, URL copy + open buttons, a QR code button for
+showing the address on your phone, live stats, add/edit dialogs, relay
+settings (server, secret, latency check) and start-on-login via a systemd user
+unit. Closing the window keeps tunnels running; Quit stops them.
+Desktop notifications tell you when a tunnel goes live or fails.
 
 The tray uses StatusNotifierItem, so it shows in KDE, sway/waybar and GNOME
-(with the AppIndicator extension). Toggles per app, Open, Quit.
+(with the AppIndicator extension). Its icon turns green while a tunnel is
+live. Left-click toggles the window, right-click opens the menu:
+per-app toggles, Open, Quit.
 
-Install both launchers:
+Install the binaries and launcher:
 
 ```bash
 install -Dm755 target/release/localfly ~/.local/bin/localfly
+install -Dm755 target/release/localflyd ~/.local/bin/localflyd
 install -Dm755 gui/localfly-gui ~/.local/bin/localfly-gui
 install -Dm644 com.localfly.Localfly.desktop ~/.local/share/applications/com.localfly.Localfly.desktop
 ```
 
+Shell completions and man pages live in `packaging/generated/` (built by
+`cargo run --example gen_assets`); distro packages install them for you.
+
 ## CLI use (headless / scripting)
+
+A `localflyd` daemon owns every tunnel; the CLI (and the GUI) are thin
+clients that talk to it over a same-UID Unix socket. The daemon auto-spawns
+on first use and exits by itself after 10 idle minutes.
 
 ```bash
 localfly add --name web --port 3000
-localfly on web                 # foreground; Ctrl-C stops
-localfly expose 5173 --relay bore.pub
+localfly on web                 # follows status; Ctrl-C detaches (tunnel keeps running)
+localfly off web                # stop it (or: localfly off --all)
+localfly expose 5173 --relay bore.pub   # one-shot, foreground; Ctrl-C stops it
 
 localfly edit web --public-port 40001
 localfly config --relay example.com:7835 --secret "$BORE_SECRET"
-localfly up                     # every --start-on-launch app, foreground
+localfly up                     # start every start-on-launch app (SIGTERM stops all)
 
-localfly list
+localfly list                   # saved apps with live status
+localfly status                 # live tunnels + traffic (add --json to script it)
 localfly scan                   # common dev ports: 3000, 5173, 8000, …
 localfly probe 3000
 localfly relay-status
 localfly update-check
 ```
 
-`on`/`expose` refuse empty ports (`Nothing running on :3000`). `up` skips apps with nothing listening and keeps the rest up.
+`on` refuses empty ports (`Nothing running on :3000`). `up` skips apps with nothing listening.
 
 ## Where things live
 
 | Setting | Location |
 |---|---|
-| Saved apps | `~/.config/localfly/apps.json` (`$LOCALFLY_CONFIG` overrides) |
-| Relay secret | `~/.config/localfly/secret` mode `0600` (`$LOCALFLY_SECRET` env wins) |
+| Saved apps | `~/.config/localfly/apps.json` (`$LOCALFLY_CONFIG` overrides; owned by `localflyd`) |
+| Daemon socket | `$XDG_RUNTIME_DIR/localfly.sock` (`$LOCALFLY_SOCKET` overrides) |
+| Relay secret | GNOME Keychain / KWallet when available, else `~/.config/localfly/secret` mode `0600` (`$LOCALFLY_SECRET` env wins) |
 | Relay / auto-reconnect | `~/.config/localfly/config.json` via `localfly config` |
 | Start on login | `localfly.service` → `systemctl --user enable --now` (runs `localfly up`) |
-| Copy / open URL | stdout URL (pipe to `wl-copy`/`xclip`, open with `xdg-open`) |
+| Copy / open URL | stdout URL (pipe to `wl-copy`/`xclip`, open with `xdg-open`); QR button in the GUI |
 
 ## Self-hosting
 
@@ -146,15 +162,23 @@ See [docs/self-hosting.md](docs/self-hosting.md). In short: run the relay in `de
 cargo test
 ```
 
-7 unit tests (bore protocol vectors) + 4 live-relay integration tests against a real `bore server` 0.6.0 on `127.0.0.1:7835`, covering traffic round-trip, secret auth, fixed ports, and unreachable-relay errors.
+7 unit tests (bore protocol vectors, keyring fallback) + 4 live-relay tunnel
+tests + 3 daemon protocol tests (CRUD, traffic, subscribe stream,
+idle-exit) against a real `bore server` 0.6.0 on `127.0.0.1:7835`,
+covering traffic round-trip, secret auth, fixed ports, and
+unreachable-relay errors. GUI backend: `python3 -m unittest discover -s gui/tests`.
 
 ## Project layout
 
 ```text
-src/            tunnel engine + CLI (bore protocol over tokio, no UI toolkit)
-tests/          live-relay integration tests
+src/            tunnel engine (bore protocol over tokio) + CLI + localflyd
+src/bin/        localfly (CLI) and localflyd (tunnel daemon, Unix socket)
+gui/            Adwaita window + StatusNotifierItem tray (drives the daemon)
+packaging/      nfpm (.deb/.rpm), AppStream metainfo, icons, AUR sources,
+                generated shell completions + man pages
+tests/          live-relay integration tests (daemon + engine)
 deploy/         relay for self-hosting: bore server + Caddy (docker compose)
-docs/           self-hosting guide
+docs/           self-hosting guide, screenshots
 ```
 
 ## Contributing
