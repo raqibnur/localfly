@@ -778,8 +778,13 @@ class MainWindow(Adw.ApplicationWindow):
         self.update_tray_menu()
 
     def show_from_tray(self):
-        self.set_visible(True)
-        self.present()
+        # Waybar left-clicks open the menu (ItemIsMenu); environments that
+        # call Activate get a toggle instead. Either way the window appears.
+        if self.is_visible():
+            self.set_visible(False)
+        else:
+            self.set_visible(True)
+            self.present()
 
     def update_tray_menu(self):
         if not getattr(self, "tray", None):

@@ -40,7 +40,11 @@ MENU_XML = """
       <arg name="parentId" type="i" direction="in"/>
       <arg name="recursionDepth" type="i" direction="in"/>
       <arg name="propertyNames" type="as" direction="in"/>
-      <arg name="layout" type="(u(ia{sv}av))" direction="out"/>
+      <!-- Declared as two out args (not one struct) so Gio validates the
+           reply body as (u(ia{sv}av)) — the exact wire format renderers
+           like libdbusmenu expect. -->
+      <arg name="revision" type="u" direction="out"/>
+      <arg name="layout" type="(ia{sv}av)" direction="out"/>
     </method>
     <method name="GetGroupProperties">
       <arg name="ids" type="ai" direction="in"/>
@@ -242,6 +246,11 @@ class Tray:
         # av elements must be Variants; the root tuple stays plain python.
         return GLib.Variant("(ia{sv}av)", (item.id, self._props(item), []))
 
+    def _item_tuple(self, item: MenuItem):
+        # Plain-tuple form: PyGObject rejects pre-built Variants in a
+        # top-level array (GetChildren), but accepts them nested (GetLayout).
+        return (item.id, self._props(item), [])
+
     def _menu_method(self, _conn, _sender, _path, _iface, method, params, invocation, *_extra):
         try:
             self._menu_method_inner(method, params, invocation)
@@ -258,18 +267,16 @@ class Tray:
             _parent, _depth, _names = params.unpack()
             children = [self._item_variant(i) for i in self.items if i.visible]
             root = (0, {"children-display": GLib.Variant("s", "submenu")}, children)
-            invocation.return_value(
-                GLib.Variant("((u(ia{sv}av)))", ((self.revision, root),))
-            )
+            invocation.return_value(GLib.Variant("(u(ia{sv}av))", (self.revision, root)))
         elif method == "GetGroupProperties":
             ids, _names = params.unpack()
             out = [(item.id, self._props(item)) for item in self.items if item.id in ids]
-            invocation.return_value(GLib.Variant("((a(ia{sv})))", ((out,),)))
+            invocation.return_value(GLib.Variant("(a(ia{sv}))", (out,)))
         elif method == "GetChildren":
             _pid, _names = params.unpack()
             invocation.return_value(
                 GLib.Variant(
-                    "((a(ia{sv}av)))", (([self._item_variant(i) for i in self.items],),)
+                    "(a(ia{sv}av))", ([self._item_tuple(i) for i in self.items],)
                 )
             )
         elif method == "GetChildren":
@@ -287,11 +294,11 @@ class Tray:
                         break
             invocation.return_value(None)
         elif method == "EventGroup":
-            invocation.return_value(GLib.Variant("((ai))", (([],),)))
+            invocation.return_value(GLib.Variant("(ai)", ([],)))
         elif method == "AboutToShow":
-            invocation.return_value(GLib.Variant("((b))", ((False,),)))
+            invocation.return_value(GLib.Variant("(b)", (False,)))
         elif method == "AboutToShowGroup":
-            invocation.return_value(GLib.Variant("((aiai))", (([], []),)))
+            invocation.return_value(GLib.Variant("(aiai)", ([], [])))
         else:
             invocation.return_dbus_error("com.canonical.dbusmenu.UnknownMethod", "unknown method")
 
