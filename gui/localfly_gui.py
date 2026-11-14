@@ -231,7 +231,7 @@ class AppRow(Gtk.Box):
             tail = (tunnel.lines[-1] if tunnel.lines else "connecting…").strip()
             self.status_label.set_text(tail[-120:])
         elif listening is False:
-            self.status_label.set_text(f"Nothing running on :{app.port} — start your dev server first")
+            self.status_label.set_text(f"Nothing running on :{app.port} - start your dev server first")
         else:
             self.status_label.set_text("")
 
@@ -608,7 +608,7 @@ class MainWindow(Adw.ApplicationWindow):
     def unit_content(self):
         return (
             "[Unit]\n"
-            "Description=Localfly — expose saved localhost apps via bore\n"
+            "Description=Localfly - expose saved localhost apps via bore\n"
             "After=network-online.target\n"
             "Wants=network-online.target\n"
             "\n"
@@ -679,7 +679,7 @@ class MainWindow(Adw.ApplicationWindow):
         group.add(Adw.ActionRow(title="Version", subtitle=VERSION))
         maintainer = Adw.ActionRow(
             title="Maintainer",
-            subtitle="9M2PJU — hamradio.my. Click to open.",
+            subtitle="9M2PJU - hamradio.my. Click to open.",
         )
         maintainer.set_activatable(True)
         maintainer.connect(
@@ -689,7 +689,7 @@ class MainWindow(Adw.ApplicationWindow):
         group.add(maintainer)
         credit = Adw.ActionRow(
             title="Original macOS app",
-            subtitle="Raqib Nur — raqibnur/localfly (MIT). Click to open.",
+            subtitle="Raqib Nur - raqibnur/localfly (MIT). Click to open.",
         )
         credit.set_activatable(True)
         credit.connect(
@@ -780,7 +780,7 @@ class MainWindow(Adw.ApplicationWindow):
             return
         st = next((s for s in self.states if s.app.id == app_id), None)
         if st and st.listening is False:
-            self.toast(f"Nothing running on :{st.app.port} — start your dev server first")
+            self.toast(f"Nothing running on :{st.app.port} - start your dev server first")
             self.refresh_soon()
             return
         try:
@@ -906,7 +906,10 @@ class MainWindow(Adw.ApplicationWindow):
         if not HAVE_TRAY:
             return
         try:
-            self.tray = Tray(on_show_menu=self.show_from_tray)
+            # Official logo when installed in the icon theme, generic otherwise.
+            theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+            icon = "localfly" if theme.has_icon("localfly") else "network-transmit-receive"
+            self.tray = Tray(on_show_menu=self.show_from_tray, icon_name=icon)
         except GLib.Error:
             self.tray = None
             return
@@ -932,7 +935,7 @@ class MainWindow(Adw.ApplicationWindow):
             return
         live = sum(1 for t in self.tunnels.values() if t.url)
         total = len(self.states)
-        items = [MenuItem(id=1, label=f"Localfly — {live}/{total} live", enabled=False)]
+        items = [MenuItem(id=1, label=f"Localfly - {live}/{total} live", enabled=False)]
         next_id = 10
         self._tray_app_ids = {}
         for st in self.states:

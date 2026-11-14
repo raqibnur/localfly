@@ -3,7 +3,7 @@ arch: "${ARCH}"
 version: 0.1.0
 release: 1
 maintainer: 9M2PJU
-description: Your localhost, on the internet — bore tunnels with an Adwaita window + tray
+description: Your localhost, on the internet - bore tunnels with an Adwaita window + tray
 homepage: https://hamradio.my
 license: MIT
 section: net
@@ -51,6 +51,10 @@ contents:
     file_info: { mode: 0644 }
   - src: packaging/icons/localfly.png
     dst: /usr/share/icons/hicolor/256x256/apps/localfly.png
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/icons/localfly-48.png
+    dst: /usr/share/icons/hicolor/48x48/apps/localfly.png
     type: file
     file_info: { mode: 0644 }
   - src: packaging/localfly.service

@@ -1,5 +1,5 @@
 [Unit]
-Description=Localfly — expose saved localhost apps via bore
+Description=Localfly - expose saved localhost apps via bore
 After=network-online.target
 Wants=network-online.target
 

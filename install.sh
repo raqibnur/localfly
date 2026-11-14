@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Localfly for Linux — one-liner install (no root needed).
+# Localfly for Linux - one-liner install (no root needed).
 #
 #   curl -fsSL https://raw.githubusercontent.com/9M2PJU/localfly-linux/main/install.sh | sh
 #

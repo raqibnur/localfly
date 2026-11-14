@@ -301,7 +301,7 @@ async fn run_loop(
                 break;
             }
         }
-        // A fixed port is always asked for again (Swift parity — handled via `requested` above).
+        // A fixed port is always asked for again (Swift parity - handled via `requested` above).
         tokio::time::sleep(backoff(retry_attempt.saturating_sub(1))).await;
         {
             let inner = mgr.inner.lock().await;

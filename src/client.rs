@@ -273,7 +273,7 @@ async fn open_proxy(config: Config, id: Uuid, stats: Arc<SharedStats>) {
                     return;
                 }
                 // bore never pipelines bytes after the challenge; drop any leftover
-                // (Swift forwards it to the local app — no-op here).
+                // (Swift forwards it to the local app - no-op here).
                 let _ = reader.drain();
             }
             ProxyAuth::Failed => {

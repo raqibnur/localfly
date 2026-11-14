@@ -1,6 +1,10 @@
 # Localfly for Linux
 
-Your localhost, on the internet. A free, open-source app that gives any app on your Linux machine a public link — an Adwaita window + system tray, like the macOS menu bar app, over a Rust tunnel engine.
+<p align="center">
+  <img src="packaging/icons/localfly.png" width="96" height="96" alt="Localfly logo">
+</p>
+
+Your localhost, on the internet. A free, open-source app that gives any app on your Linux machine a public link - an Adwaita window + system tray, like the macOS menu bar app, over a Rust tunnel engine.
 
 Save an app by its port, flip the switch, and share the address. Test your site on your phone, show work to a client, or receive webhooks, all without deploying anything.
 
@@ -125,4 +129,4 @@ Maintained by [9M2PJU](https://hamradio.my). Original macOS app by [Raqib Nur](h
 
 ## License
 
-[MIT](LICENSE) — © Raqib Nur for the original app; Linux port contributions under the same license.
+[MIT](LICENSE) - © Raqib Nur for the original app; Linux port contributions under the same license.

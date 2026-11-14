@@ -190,7 +190,7 @@ async fn run_tunnel_foreground(
     public_address: Option<String>,
 ) -> Result<(), AnyErr> {
     if !probe::is_listening(local_port, &options.local_host, Duration::from_millis(1000)).await {
-        eprintln!("Nothing running on :{local_port} — start your dev server first.");
+        eprintln!("Nothing running on :{local_port} - start your dev server first.");
         std::process::exit(2);
     }
     let mgr = TunnelManager::new();
@@ -498,7 +498,7 @@ async fn main() -> Result<(), AnyErr> {
         Cmd::UpdateCheck => {
             let current = env!("CARGO_PKG_VERSION");
             match update_check().await {
-                Ok(Some((ver, url))) => println!("Update available: {ver} ({url}) — you have {current}"),
+                Ok(Some((ver, url))) => println!("Update available: {ver} ({url}) - you have {current}"),
                 Ok(None) => println!("Up to date ({current})."),
                 Err(e) => {
                     eprintln!("Update check failed: {e}");

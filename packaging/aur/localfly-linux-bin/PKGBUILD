@@ -2,7 +2,7 @@
 pkgname=localfly-linux-bin
 pkgver=0.1.0
 pkgrel=1
-pkgdesc="Your localhost, on the internet — bore tunnels with an Adwaita window + tray (prebuilt)"
+pkgdesc="Your localhost, on the internet - bore tunnels with an Adwaita window + tray (prebuilt)"
 arch=('x86_64' 'aarch64')
 url="https://github.com/9M2PJU/localfly-linux"
 license=('MIT')

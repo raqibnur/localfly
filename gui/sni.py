@@ -41,7 +41,7 @@ MENU_XML = """
       <arg name="recursionDepth" type="i" direction="in"/>
       <arg name="propertyNames" type="as" direction="in"/>
       <!-- Declared as two out args (not one struct) so Gio validates the
-           reply body as (u(ia{sv}av)) — the exact wire format renderers
+           reply body as (u(ia{sv}av)) - the exact wire format renderers
            like libdbusmenu expect. -->
       <arg name="revision" type="u" direction="out"/>
       <arg name="layout" type="(ia{sv}av)" direction="out"/>
@@ -105,9 +105,10 @@ class MenuItem:
 class Tray:
     """Owns the bus name, SNI object and dbusmenu; call set_menu() to refresh."""
 
-    def __init__(self, on_show_menu=None):
+    def __init__(self, on_show_menu=None, icon_name="network-transmit-receive"):
         self.bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
         self.service = f"org.kde.StatusNotifierItem-{os.getpid()}-1"
+        self.icon_name = icon_name
         self.path = "/StatusNotifierItem"
         self.menu_path = "/Menu"
         self.revision = 1
@@ -212,7 +213,7 @@ class Tray:
         if name == "Status":
             return GLib.Variant("s", self.status)
         if name == "IconName":
-            return GLib.Variant("s", "network-transmit-receive")
+            return GLib.Variant("s", self.icon_name)
         if name == "ItemIsMenu":
             # False: left-click means Activate (we toggle the window) and
             # right-click opens the menu. True would route left-click to
