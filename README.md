@@ -78,6 +78,8 @@ systemctl --user enable --now localfly.service
 ```
 
 Requires a C toolchain + cargo for source builds (Arch: `pacman -S rust`; Debian: `apt install cargo`).
+For headless servers without a keyring, build file-only (skips half the
+dependency tree): `cargo install --path . --no-default-features`.
 The GUI additionally needs `python3-gi` + GTK4 + libadwaita
 (Arch: `python-gobject gtk4 libadwaita`; Debian: `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1`).
 

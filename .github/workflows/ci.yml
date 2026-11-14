@@ -16,6 +16,8 @@ jobs:
           bore --version
       - name: Test
         run: cargo test --locked
+      - name: Test (no default features: file-only secrets, minimal deps)
+        run: cargo test --locked --no-default-features
       - name: Build
         run: cargo build --locked
       - name: Generated shell completions and man pages are fresh

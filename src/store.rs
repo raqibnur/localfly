@@ -153,20 +153,25 @@ pub fn write_secret(secret: &str) {
     keyring_set(secret);
 }
 
-/// Best-effort keyring access: None when no Secret Service answers.
+/// Best-effort keyring access: None when no Secret Service answers, or when
+/// built with `--no-default-features` (keyring support compiled out).
+#[cfg(feature = "keyring")]
 fn keyring_get() -> Option<String> {
     tokio_block_on(keyring_get_async()).flatten().filter(|s| !s.is_empty())
 }
 
+#[cfg(feature = "keyring")]
 fn keyring_set(secret: &str) {
     let owned = secret.to_string();
     let _ = tokio_block_on(keyring_set_async(owned));
 }
 
+#[cfg(feature = "keyring")]
 fn keyring_delete() {
     let _ = tokio_block_on(keyring_delete_async());
 }
 
+#[cfg(feature = "keyring")]
 async fn keyring_get_async() -> Option<String> {
     use secret_service::EncryptionType;
     use std::collections::HashMap;
@@ -184,6 +189,7 @@ async fn keyring_get_async() -> Option<String> {
     String::from_utf8(secret).ok()
 }
 
+#[cfg(feature = "keyring")]
 async fn keyring_set_async(secret: String) -> Option<()> {
     use secret_service::EncryptionType;
     use std::collections::HashMap;
@@ -202,6 +208,7 @@ async fn keyring_set_async(secret: String) -> Option<()> {
         .map(|_| ())
 }
 
+#[cfg(feature = "keyring")]
 async fn keyring_delete_async() -> Option<()> {
     use secret_service::EncryptionType;
     use std::collections::HashMap;
@@ -220,6 +227,21 @@ async fn keyring_delete_async() -> Option<()> {
     Some(())
 }
 
+#[cfg(not(feature = "keyring"))]
+#[allow(dead_code)]
+fn keyring_get() -> Option<String> {
+    None
+}
+
+#[cfg(not(feature = "keyring"))]
+#[allow(dead_code)]
+fn keyring_set(_secret: &str) {}
+
+#[cfg(not(feature = "keyring"))]
+#[allow(dead_code)]
+fn keyring_delete() {}
+
+#[cfg(feature = "keyring")]
 fn tokio_block_on<F>(fut: F) -> Option<F::Output>
 where
     F: std::future::Future + Send + 'static,
