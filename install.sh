@@ -120,6 +120,21 @@ if [ -d "$PKGDIR/man" ]; then
   as_root install -Dm644 "$PKGDIR/man/localfly.1" "$SHARE/man/man1/localfly.1" || true
   as_root install -Dm644 "$PKGDIR/man/localflyd.1" "$SHARE/man/man1/localflyd.1" || true
 fi
+if [ -f "$PKGDIR/com.localfly.Localfly.metainfo.xml" ]; then
+  as_root install -Dm644 "$PKGDIR/com.localfly.Localfly.metainfo.xml" "$SHARE/metainfo/com.localfly.Localfly.metainfo.xml"
+fi
+if [ -d "$PKGDIR/completions" ]; then
+  as_root install -Dm644 "$PKGDIR/completions/localfly.bash" "$SHARE/bash-completion/completions/localfly" || true
+  as_root install -Dm644 "$PKGDIR/completions/localflyd.bash" "$SHARE/bash-completion/completions/localflyd" || true
+  as_root install -Dm644 "$PKGDIR/completions/_localfly" "$SHARE/zsh/site-functions/_localfly" || true
+  as_root install -Dm644 "$PKGDIR/completions/_localflyd" "$SHARE/zsh/site-functions/_localflyd" || true
+  as_root install -Dm644 "$PKGDIR/completions/localfly.fish" "$HOME/.config/fish/completions/localfly.fish" || true
+  as_root install -Dm644 "$PKGDIR/completions/localflyd.fish" "$HOME/.config/fish/completions/localflyd.fish" || true
+fi
+if [ -d "$PKGDIR/man" ]; then
+  as_root install -Dm644 "$PKGDIR/man/localfly.1" "$SHARE/man/man1/localfly.1" || true
+  as_root install -Dm644 "$PKGDIR/man/localflyd.1" "$SHARE/man/man1/localflyd.1" || true
+fi
 echo "GUI installed (requires: python3-gi gir1.2-gtk-4.0 gir1.2-adw-1)."
 
 echo "Done. Make sure $BIN is on your PATH, then run: localfly --help"

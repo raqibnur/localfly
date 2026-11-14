@@ -50,10 +50,50 @@ jobs:
           cp localfly.service com.localfly.Localfly.desktop README.md LICENSE "$PKG/"
           tar -czf "$PKG.tar.gz" "$PKG"
           echo "PKG=$PKG.tar.gz" >> "$GITHUB_ENV"
+      - name: Stamp package version from tag
+        run: |
+          sed -i -E "s/^version: .*/version: \"${GITHUB_REF_NAME#v}\"/" packaging/nfpm.yaml
+          grep -E "^version:" packaging/nfpm.yaml
+      - name: Install nfpm
+        run: |
+          case "${{ matrix.target }}" in
+            x86_64*) NFPM_ARCH=x86_64 ;;
+            aarch64*) NFPM_ARCH=arm64 ;;
+          esac
+          echo "NFPM_ARCH=$NFPM_ARCH" >> "$GITHUB_ENV"
+          curl -fsSL -o /tmp/nfpm.tar.gz "https://github.com/goreleaser/nfpm/releases/download/v2.43.1/nfpm_2.43.1_Linux_${NFPM_ARCH}.tar.gz"
+          tar -xzf /tmp/nfpm.tar.gz -C /tmp nfpm
+      - name: Build .deb/.rpm/.pkg.tar.zst
+        run: |
+          mkdir -p dist
+          /tmp/nfpm package --config packaging/nfpm.yaml --packager deb --target dist/
+          /tmp/nfpm package --config packaging/nfpm.yaml --packager rpm --target dist/
+          /tmp/nfpm package --config packaging/nfpm.yaml --packager archlinux --target dist/
+          ls dist/
+      - name: Build AppImage
+        run: |
+          case "${{ matrix.target }}" in
+            x86_64*) APPARCH=x86_64 ;;
+            aarch64*) APPARCH=aarch64 ;;
+          esac
+          curl -fsSL -o appimagetool.AppImage "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${APPARCH}.AppImage"
+          chmod +x appimagetool.AppImage
+          ./appimagetool.AppImage --appimage-extract >/dev/null
+          rm -rf AppDir && mkdir -p AppDir/usr/bin
+          cp "target/${{ matrix.target }}/release/localfly" AppDir/usr/bin/
+          cp packaging/icons/localfly.png AppDir/localfly.png
+          cp packaging/localfly-cli.desktop AppDir/localfly.desktop
+          cp packaging/AppRun AppDir/AppRun
+          chmod +x AppDir/AppRun
+          mkdir -p dist
+          ARCH=$APPARCH ./squashfs-root/AppRun AppDir "dist/Localfly-${GITHUB_REF_NAME}-${APPARCH}.AppImage"
+          ls dist/
       - uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.PKG }}
-          path: ${{ env.PKG }}
+          name: ${{ env.PKG }}-plus-packages
+          path: |
+            ${{ env.PKG }}.tar.gz
+            dist/*
           if-no-files-found: error
 
   release:
@@ -66,5 +106,6 @@ jobs:
           merge-multiple: true
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.tar.gz
+          # dist/ holds only release files (tarballs + distro packages).
+          files: dist/*
           generate_release_notes: true

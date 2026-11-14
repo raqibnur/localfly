@@ -1,7 +1,7 @@
 name: localfly-linux
 arch: "${ARCH}"
-version: 0.1.1
-release: 1
+version: "0.1.1"
+release: "1"
 maintainer: 9M2PJU
 description: Your localhost, on the internet - bore tunnels with an Adwaita window + tray
 homepage: https://hamradio.my
