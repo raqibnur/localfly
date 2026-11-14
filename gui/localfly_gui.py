@@ -778,8 +778,8 @@ class MainWindow(Adw.ApplicationWindow):
         self.update_tray_menu()
 
     def show_from_tray(self):
-        # Waybar left-clicks open the menu (ItemIsMenu); environments that
-        # call Activate get a toggle instead. Either way the window appears.
+        # Left-click toggles the window (ItemIsMenu=false routes button1 to
+        # Activate); right-click opens the menu via waybar's dbusmenu popup.
         if self.is_visible():
             self.set_visible(False)
         else:

@@ -214,7 +214,10 @@ class Tray:
         if name == "IconName":
             return GLib.Variant("s", "network-transmit-receive")
         if name == "ItemIsMenu":
-            return GLib.Variant("b", True)
+            # False: left-click means Activate (we toggle the window) and
+            # right-click opens the menu. True would route left-click to
+            # the menu instead (waybar behavior for menu-only items).
+            return GLib.Variant("b", False)
         if name == "Menu":
             return GLib.Variant("o", self.menu_path)
         if name == "ToolTip":
