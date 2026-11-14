@@ -4,6 +4,7 @@
 //! socket with one JSON request per connection. The daemon exits on its own
 //! after 10 idle minutes with no live tunnels (clients re-spawn it).
 
+use clap::Parser as _;
 use localfly_lib::daemon::{
     self, AppRegistry, Request, Response, TunnelDto,
 };
@@ -53,7 +54,17 @@ impl State {
 
 #[tokio::main]
 async fn main() {
-    let path = daemon::socket_path();
+    let args = localfly_lib::cli::DaemonArgs::parse();
+    let path = args
+        .socket
+        .clone()
+        .or_else(|| {
+            std::env::var("LOCALFLY_SOCKET")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+                .map(std::path::PathBuf::from)
+        })
+        .unwrap_or_else(daemon::socket_path);
     // Another daemon already running? Defer to it (used by auto-spawn races).
     if is_alive(&path).await {
         return;

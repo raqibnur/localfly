@@ -5,6 +5,17 @@
 use clap::{Parser, Subcommand};
 use std::time::Duration;
 
+/// Flags for the `localflyd` background daemon. It usually needs no
+/// arguments: clients auto-spawn it and it idle-exits on its own.
+#[derive(Parser)]
+#[command(name = "localflyd", version, about = "Localfly Linux tunnel daemon (Unix socket, auto-spawned by the CLI)")]
+pub struct DaemonArgs {
+    /// Unix socket path (default: $XDG_RUNTIME_DIR/localfly.sock).
+    /// Also settable via LOCALFLY_SOCKET.
+    #[arg(long)]
+    pub socket: Option<std::path::PathBuf>,
+}
+
 #[derive(Parser)]
 #[command(name = "localfly", version, about = "Your localhost, on the internet (Localfly Linux)")]
 pub struct Cli {

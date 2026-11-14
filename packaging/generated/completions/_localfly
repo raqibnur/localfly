@@ -1,0 +1,424 @@
+#compdef localfly
+
+autoload -U is-at-least
+
+_localfly() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_localfly_commands" \
+"*::: :->localfly" \
+&& ret=0
+    case $state in
+    (localfly)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:localfly-command-$line[1]:"
+        case $line[1] in
+            (add)
+_arguments "${_arguments_options[@]}" : \
+'--name=[]:NAME:_default' \
+'--port=[]:PORT:_default' \
+'--public-port=[]:PUBLIC_PORT:_default' \
+'--public-address=[]:PUBLIC_ADDRESS:_default' \
+'--start-on-launch[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+'--json[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(rm)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+':selector:_default' \
+&& ret=0
+;;
+(edit)
+_arguments "${_arguments_options[@]}" : \
+'--name=[]:NAME:_default' \
+'--port=[]:PORT:_default' \
+'--public-port=[]:PUBLIC_PORT:_default' \
+'--public-address=[]:PUBLIC_ADDRESS:_default' \
+'--start-on-launch=[]:START_ON_LAUNCH:(true false)' \
+'--no-public-port[]' \
+'--no-public-address[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':selector:_default' \
+&& ret=0
+;;
+(on)
+_arguments "${_arguments_options[@]}" : \
+'--relay=[]:RELAY:_default' \
+'--secret=[]:SECRET:_default' \
+'--local-host=[]:LOCAL_HOST:_default' \
+'--no-reconnect[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':selector:_default' \
+&& ret=0
+;;
+(off)
+_arguments "${_arguments_options[@]}" : \
+'--all[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'::selector:_default' \
+&& ret=0
+;;
+(expose)
+_arguments "${_arguments_options[@]}" : \
+'--remote-port=[]:REMOTE_PORT:_default' \
+'--relay=[]:RELAY:_default' \
+'--secret=[]:SECRET:_default' \
+'--local-host=[]:LOCAL_HOST:_default' \
+'--no-reconnect[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':port:_default' \
+&& ret=0
+;;
+(up)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(status)
+_arguments "${_arguments_options[@]}" : \
+'--json[]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(probe)
+_arguments "${_arguments_options[@]}" : \
+'--host=[]:HOST:_default' \
+'-h[Print help]' \
+'--help[Print help]' \
+':port:_default' \
+&& ret=0
+;;
+(scan)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(relay-status)
+_arguments "${_arguments_options[@]}" : \
+'--relay=[]:RELAY:_default' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(config)
+_arguments "${_arguments_options[@]}" : \
+'--relay=[]:RELAY:_default' \
+'--auto-reconnect=[]:AUTO_RECONNECT:(true false)' \
+'--local-host=[]:LOCAL_HOST:_default' \
+'--secret=[]:SECRET:_default' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(update-check)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_localfly__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:localfly-help-command-$line[1]:"
+        case $line[1] in
+            (add)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(rm)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(edit)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(on)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(off)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(expose)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(up)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(probe)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(scan)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(relay-status)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(config)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(update-check)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_localfly_commands] )) ||
+_localfly_commands() {
+    local commands; commands=(
+'add:Save an app by its local port' \
+'list:List saved apps with live status dots' \
+'rm:Remove a saved app (by id prefix, name, or port)' \
+'edit:Edit a saved app' \
+'on:Expose a saved app in the daemon (follows status; Ctrl-C detaches, tunnel keeps running)' \
+'off:Stop a saved app'\''s tunnel (or --all)' \
+'expose:One-shot tunnel without saving (foreground; Ctrl-C stops it)' \
+'up:Start every app marked start-on-launch in the daemon (foreground follow; SIGTERM stops all)' \
+'status:Show live tunnels and their traffic' \
+'probe:Check whether something listens on a port' \
+'scan:Scan localhost for common dev-server ports' \
+'relay-status:Measure relay control-port latency' \
+'config:Persist defaults (mirrors macOS Settings\: relay, auto-reconnect, local host)' \
+'update-check:Check GitHub releases for a newer version (read-only, like UpdateChecker)' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'localfly commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__add_commands] )) ||
+_localfly__subcmd__add_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly add commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__config_commands] )) ||
+_localfly__subcmd__config_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly config commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__edit_commands] )) ||
+_localfly__subcmd__edit_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly edit commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__expose_commands] )) ||
+_localfly__subcmd__expose_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly expose commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help_commands] )) ||
+_localfly__subcmd__help_commands() {
+    local commands; commands=(
+'add:Save an app by its local port' \
+'list:List saved apps with live status dots' \
+'rm:Remove a saved app (by id prefix, name, or port)' \
+'edit:Edit a saved app' \
+'on:Expose a saved app in the daemon (follows status; Ctrl-C detaches, tunnel keeps running)' \
+'off:Stop a saved app'\''s tunnel (or --all)' \
+'expose:One-shot tunnel without saving (foreground; Ctrl-C stops it)' \
+'up:Start every app marked start-on-launch in the daemon (foreground follow; SIGTERM stops all)' \
+'status:Show live tunnels and their traffic' \
+'probe:Check whether something listens on a port' \
+'scan:Scan localhost for common dev-server ports' \
+'relay-status:Measure relay control-port latency' \
+'config:Persist defaults (mirrors macOS Settings\: relay, auto-reconnect, local host)' \
+'update-check:Check GitHub releases for a newer version (read-only, like UpdateChecker)' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'localfly help commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__add_commands] )) ||
+_localfly__subcmd__help__subcmd__add_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help add commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__config_commands] )) ||
+_localfly__subcmd__help__subcmd__config_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help config commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__edit_commands] )) ||
+_localfly__subcmd__help__subcmd__edit_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help edit commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__expose_commands] )) ||
+_localfly__subcmd__help__subcmd__expose_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help expose commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__help_commands] )) ||
+_localfly__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help help commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__list_commands] )) ||
+_localfly__subcmd__help__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help list commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__off_commands] )) ||
+_localfly__subcmd__help__subcmd__off_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help off commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__on_commands] )) ||
+_localfly__subcmd__help__subcmd__on_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help on commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__probe_commands] )) ||
+_localfly__subcmd__help__subcmd__probe_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help probe commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__relay-status_commands] )) ||
+_localfly__subcmd__help__subcmd__relay-status_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help relay-status commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__rm_commands] )) ||
+_localfly__subcmd__help__subcmd__rm_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help rm commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__scan_commands] )) ||
+_localfly__subcmd__help__subcmd__scan_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help scan commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__status_commands] )) ||
+_localfly__subcmd__help__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help status commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__up_commands] )) ||
+_localfly__subcmd__help__subcmd__up_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help up commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__help__subcmd__update-check_commands] )) ||
+_localfly__subcmd__help__subcmd__update-check_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly help update-check commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__list_commands] )) ||
+_localfly__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly list commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__off_commands] )) ||
+_localfly__subcmd__off_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly off commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__on_commands] )) ||
+_localfly__subcmd__on_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly on commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__probe_commands] )) ||
+_localfly__subcmd__probe_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly probe commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__relay-status_commands] )) ||
+_localfly__subcmd__relay-status_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly relay-status commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__rm_commands] )) ||
+_localfly__subcmd__rm_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly rm commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__scan_commands] )) ||
+_localfly__subcmd__scan_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly scan commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__status_commands] )) ||
+_localfly__subcmd__status_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly status commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__up_commands] )) ||
+_localfly__subcmd__up_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly up commands' commands "$@"
+}
+(( $+functions[_localfly__subcmd__update-check_commands] )) ||
+_localfly__subcmd__update-check_commands() {
+    local commands; commands=()
+    _describe -t commands 'localfly update-check commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_localfly" ]; then
+    _localfly "$@"
+else
+    compdef _localfly localfly
+fi

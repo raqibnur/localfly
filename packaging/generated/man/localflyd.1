@@ -1,0 +1,21 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH localflyd 1  "localflyd 0.1.0" 
+.SH NAME
+localflyd \- Localfly Linux tunnel daemon (Unix socket, auto\-spawned by the CLI)
+.SH SYNOPSIS
+\fBlocalflyd\fR [\fB\-\-socket\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] 
+.SH DESCRIPTION
+Localfly Linux tunnel daemon (Unix socket, auto\-spawned by the CLI)
+.SH OPTIONS
+.TP
+\fB\-\-socket\fR \fI<SOCKET>\fR
+Unix socket path (default: $XDG_RUNTIME_DIR/localfly.sock). Also settable via LOCALFLY_SOCKET
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version
+.SH VERSION
+v0.1.0
