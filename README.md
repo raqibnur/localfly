@@ -51,7 +51,14 @@ yay -S localfly-linux-bin   # prebuilt, fast
 # or: yay -S localfly-linux-git  # builds from git main
 ```
 
-Manual build without an AUR helper:
+No AUR helper? Grab `localfly-linux-bin-*.pkg.tar.zst` from
+[releases](https://github.com/9M2PJU/localfly-linux/releases) and:
+
+```bash
+sudo pacman -U ./localfly-linux-bin-*.pkg.tar.zst
+```
+
+Or build manually:
 
 ```bash
 git clone https://aur.archlinux.org/localfly-linux-bin.git  # or localfly-linux-git
