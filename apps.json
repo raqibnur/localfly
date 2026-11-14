@@ -1,0 +1,11 @@
+[
+  {
+    "id": "4e16b0f5-93fc-4a8f-a838-189f9444c3fb",
+    "name": "dummy",
+    "port": 3000,
+    "start_on_launch": false,
+    "hue": 0.15833333333333333,
+    "public_port": null,
+    "public_address": null
+  }
+]

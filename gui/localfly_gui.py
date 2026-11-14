@@ -578,6 +578,19 @@ class MainWindow(Adw.ApplicationWindow):
         group = Adw.PreferencesGroup(title="Localfly", description="Your localhost, on the internet.")
         page.add(group)
         group.add(Adw.ActionRow(title="Version", subtitle=VERSION))
+        group.add(Adw.ActionRow(title="Maintainer", subtitle="9M2PJU"))
+        credit = Adw.ActionRow(
+            title="Original macOS app",
+            subtitle="Raqib Nur — raqibnur/localfly (MIT). Click to open.",
+        )
+        credit.set_activatable(True)
+        credit.connect(
+            "activated",
+            lambda *_: Gio.AppInfo.launch_default_for_uri(
+                "https://github.com/raqibnur/localfly", None
+            ),
+        )
+        group.add(credit)
         group.add(Adw.ActionRow(title="Protocol", subtitle="bore v0.6 over an outgoing relay connection"))
         group.add(Adw.ActionRow(title="License", subtitle="MIT"))
         return page
