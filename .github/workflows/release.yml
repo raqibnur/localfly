@@ -109,3 +109,15 @@ jobs:
           # dist/ holds only release files (tarballs + distro packages).
           files: dist/*
           generate_release_notes: true
+      - name: Keep only the latest release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --json tagName,isLatest \
+            --jq -r '.[] | select(.isLatest | not) | .tagName' |
+          while read -r tag; do
+            if [ -n "$tag" ]; then
+              gh release delete "$tag" --yes
+              git push origin ":refs/tags/$tag" || true
+            fi
+          done
