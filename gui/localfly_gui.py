@@ -516,7 +516,11 @@ class MainWindow(Adw.ApplicationWindow):
     def update_general_page(self):
         cfg = B.load_effective_config()
         self.reconnect_row.set_active(bool(cfg.get("auto_reconnect", True)))
-        self.login_row.set_active(self.login_enabled())
+        self._login_guard = True
+        try:
+            self.login_row.set_active(self.login_enabled())
+        finally:
+            self._login_guard = False
 
     def on_reconnect_changed(self, row, _pspec):
         try:
@@ -528,8 +532,26 @@ class MainWindow(Adw.ApplicationWindow):
         return os.path.expanduser("~/.config/systemd/user/localfly.service")
 
     def unit_template_path(self):
-        here = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(os.path.dirname(here), "localfly.service")
+        # Kept for reference; the installed unit is generated (see unit_content)
+        # so login works regardless of where the GUI is launched from.
+        here = os.path.realpath(__file__)
+        return os.path.join(os.path.dirname(os.path.dirname(here)), "localfly.service")
+
+    def unit_content(self):
+        return (
+            "[Unit]\n"
+            "Description=Localfly — expose saved localhost apps via bore\n"
+            "After=network-online.target\n"
+            "Wants=network-online.target\n"
+            "\n"
+            "[Service]\n"
+            f"ExecStart={B.find_binary()} up\n"
+            "Restart=on-failure\n"
+            "RestartSec=5\n"
+            "\n"
+            "[Install]\n"
+            "WantedBy=default.target\n"
+        )
 
     def login_enabled(self):
         try:
@@ -548,13 +570,22 @@ class MainWindow(Adw.ApplicationWindow):
         try:
             if enable:
                 os.makedirs(os.path.dirname(self.systemd_unit_path()), exist_ok=True)
-                with open(self.unit_template_path()) as f:
-                    unit = f.read()
                 with open(self.systemd_unit_path(), "w") as f:
-                    f.write(unit)
-                subprocess.run(["systemctl", "--user", "enable", "localfly.service"], check=False, timeout=15)
+                    f.write(self.unit_content())
+                proc = subprocess.run(
+                    ["systemctl", "--user", "enable", "localfly.service"],
+                    capture_output=True, text=True, timeout=15,
+                )
+                if proc.returncode != 0:
+                    raise RuntimeError((proc.stderr or proc.stdout).strip() or "systemctl enable failed")
             else:
-                subprocess.run(["systemctl", "--user", "disable", "localfly.service"], check=False, timeout=15)
+                proc = subprocess.run(
+                    ["systemctl", "--user", "disable", "localfly.service"],
+                    capture_output=True, text=True, timeout=15,
+                )
+                if proc.returncode != 0:
+                    raise RuntimeError((proc.stderr or proc.stdout).strip() or "systemctl disable failed")
+            self.toast("Start on login on" if enable else "Start on login off")
         except Exception as e:
             self.toast(f"Login setting failed: {e}")
             self._login_guard = True
