@@ -47,6 +47,11 @@
         <p>Tunnel daemon with auto-spawn and idle exit, live status command, QR codes, desktop notifications, relay latency, shell completions and man pages.</p>
       </description>
     </release>
+    <release version="0.1.0" date="2026-11-14">
+      <description>
+        <p>Initial Linux release: bore-protocol tunnel engine, CLI, Adwaita window and tray.</p>
+      </description>
+    </release>
   </releases>
   <content_rating type="oars-1.1" />
 </component>
