@@ -16,6 +16,10 @@ path = "src/lib.rs"
 name = "localfly"
 path = "src/main.rs"
 
+[[bin]]
+name = "localflyd"
+path = "src/bin/localflyd.rs"
+
 [dependencies]
 tokio = { version = "1", features = ["full"] }
 clap = { version = "4", features = ["derive"] }
@@ -25,8 +29,12 @@ hmac = "0.12"
 sha2 = "0.10"
 uuid = { version = "1", features = ["v4", "serde"] }
 dirs = "6"
+secret-service = { version = "5.2.0", features = ["rt-tokio-crypto-rust"] }
 
 [dev-dependencies]
 anyhow = "1.0.104"
+clap_complete = "4.6.11"
+clap_mangen = "0.3.3"
+fs2 = "0.4.3"
 serial_test = "4.0.1"
 tokio = { version = "1", features = ["full"] }
