@@ -60,6 +60,7 @@ class SavedApp:
     start_on_launch: bool = False
     public_port: int | None = None
     public_address: str | None = None
+    hue: float | None = None
 
 
 @dataclass
@@ -95,6 +96,7 @@ def list_apps() -> list[SavedApp]:
                 start_on_launch=bool(item.get("start_on_launch", False)),
                 public_port=item.get("public_port"),
                 public_address=item.get("public_address"),
+                hue=item.get("hue"),
             )
         )
     return apps
@@ -166,6 +168,58 @@ def load_effective_config() -> dict:
         return {}
 
 
+def parse_stats_line(line: str) -> dict | None:
+    """Parse `live URL (...; bytes_in=N bytes_out=N conns=A/B)` from CLI stderr."""
+    import re
+
+    m = re.search(
+        r"^live \S+ \(.*bytes_in=(\d+) bytes_out=(\d+) conns=(\d+)/(\d+)\)", line.strip()
+    )
+    if not m:
+        return None
+    return {
+        "bytes_in": int(m.group(1)),
+        "bytes_out": int(m.group(2)),
+        "active": int(m.group(3)),
+        "total": int(m.group(4)),
+    }
+
+
+def format_bytes(n: int) -> str:
+    n = max(0, int(n))
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        v = n / 1024
+        return f"{v:.0f} KB" if v >= 10 else f"{v:.1f} KB"
+    if n < 1024 * 1024 * 1024:
+        v = n / (1024 * 1024)
+        return f"{v:.0f} MB" if v >= 10 else f"{v:.1f} MB"
+    v = n / (1024 * 1024 * 1024)
+    return f"{v:.0f} GB" if v >= 10 else f"{v:.1f} GB"
+
+
+def format_uptime(seconds: float) -> str:
+    s = max(0, int(seconds))
+    if s < 60:
+        return f"{s}s"
+    if s < 3600:
+        return f"{s // 60}m"
+    return f"{s // 3600}h"
+
+
+def hue_color(hue: float | None) -> tuple[int, int, int]:
+    """Pastel tile color from the app's stable hue (like macOS monograms)."""
+    import colorsys
+
+    try:
+        h = float(hue) % 1.0
+    except (TypeError, ValueError):
+        h = 0.07
+    r, g, b = colorsys.hsv_to_rgb(h, 0.55, 0.88)
+    return round(r * 255), round(g * 255), round(b * 255)
+
+
 def parse_live_line(line: str) -> tuple[str, str] | None:
     """Parse `web live: localhost:3000 -> http://127.0.0.1:41234`."""
     if " live: " not in line or " -> " not in line:
@@ -186,3 +240,7 @@ class TunnelProc:
     proc: subprocess.Popen
     url: str | None = None
     lines: list[str] = field(default_factory=list)
+    since: float | None = None  # monotonic() when first live
+    stats: dict = field(default_factory=lambda: {
+        "bytes_in": 0, "bytes_out": 0, "active": 0, "total": 0,
+    })

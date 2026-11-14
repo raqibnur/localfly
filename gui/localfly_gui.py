@@ -9,9 +9,11 @@ Quit stops them. Backend tunnels run via the `localfly` CLI binary.
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import sys
 import threading
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import localfly_backend as B
@@ -37,14 +39,35 @@ def css():
     provider = Gtk.CssProvider()
     provider.load_from_string(
         """
+        /* Official Localfly flare: orange accent like the macOS app.
+           Named colors first (theme-respecting), then explicit rules so the
+           flare shows even where libadwaita reads theme variables. */
+        @define-color accent_bg_color #e86a17;
+        @define-color accent_fg_color #ffffff;
+        @define-color accent_color #e86a17;
+        switch:checked { background-color: #e86a17; }
+        switch:checked slider { background: #ffffff; }
+        button.suggested-action {
+            background: #e86a17; color: #ffffff;
+        }
+        button.suggested-action:hover { background: shade(#e86a17, 1.08); }
+        button.suggested-action:active { background: shade(#e86a17, 0.92); }
         .localfly-dot { font-size: 14px; }
         .localfly-url { font-family: monospace; font-size: 12px; }
         .localfly-dim { opacity: 0.65; }
         .localfly-hero { font-size: 30px; font-weight: 800; }
         .localfly-monogram {
-            background: @accent_bg_color; color: @accent_fg_color;
-            border-radius: 9999px; font-weight: 800;
+            color: #ffffff; font-weight: 800; font-size: 16px;
+            border-radius: 9999px;
         }
+        .localfly-pill {
+            background-color: rgba(46, 194, 126, 0.12);
+            border: 1px solid rgba(46, 194, 126, 0.4);
+            border-radius: 9999px;
+            padding-left: 12px; padding-right: 4px;
+            padding-top: 2px; padding-bottom: 2px;
+        }
+        .localfly-pill-label { color: #2ec27e; font-family: monospace; font-size: 12px; }
         """
     )
     Gtk.StyleContext.add_provider_for_display(
@@ -70,9 +93,23 @@ class AppRow(Gtk.Box):
         top.set_margin_end(14)
         self.append(top)
 
+        overlay = Gtk.Overlay()
+        top.append(overlay)
+
+        self.monogram = Gtk.Label()
+        self.monogram.add_css_class("localfly-monogram")
+        self.monogram.set_size_request(40, 40)
+        self.monogram.set_halign(Gtk.Align.CENTER)
+        self.monogram.set_valign(Gtk.Align.CENTER)
+        self._mg_class = None
+        self._mg_provider = None
+        overlay.set_child(self.monogram)
+
         self.dot = Gtk.Label()
         self.dot.add_css_class("localfly-dot")
-        top.append(self.dot)
+        self.dot.set_halign(Gtk.Align.END)
+        self.dot.set_valign(Gtk.Align.END)
+        overlay.add_overlay(self.dot)
 
         titles = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=2)
         titles.set_hexpand(True)
@@ -85,18 +122,22 @@ class AppRow(Gtk.Box):
         self.port_label.add_css_class("localfly-url")
         titles.append(self.port_label)
 
+        self.pill = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=2)
+        self.pill.add_css_class("localfly-pill")
+        self.pill.set_valign(Gtk.Align.CENTER)
+        top.append(self.pill)
         self.url_label = Gtk.Label(xalign=0, selectable=True)
-        self.url_label.add_css_class("localfly-url")
-        top.append(self.url_label)
+        self.url_label.add_css_class("localfly-pill-label")
+        self.pill.append(self.url_label)
 
         self.copy_btn = Gtk.Button(icon_name="edit-copy-symbolic", tooltip_text="Copy public URL")
         self.copy_btn.add_css_class("flat")
         self.copy_btn.connect("clicked", self.on_copy)
-        top.append(self.copy_btn)
+        self.pill.append(self.copy_btn)
         self.open_btn = Gtk.Button(icon_name="document-open-symbolic", tooltip_text="Open in browser")
         self.open_btn.add_css_class("flat")
         self.open_btn.connect("clicked", self.on_open)
-        top.append(self.open_btn)
+        self.pill.append(self.open_btn)
 
         self.switch = Gtk.Switch(valign=Gtk.Align.CENTER, tooltip_text="Expose this app")
         self.switch.connect("state-set", self.on_toggle)
@@ -123,8 +164,31 @@ class AppRow(Gtk.Box):
         self._url = None
         self.refresh(state, None)
 
+    def _paint_monogram(self, app):
+        initial = (app.name.strip()[:1].upper() or "•")
+        key = (initial, round(float(app.hue or 0.07), 4))
+        if key == getattr(self, "_mg_key", None):
+            return
+        self._mg_key = key
+        self.monogram.set_text(initial)
+        if self._mg_provider is not None:
+            self.monogram.get_style_context().remove_provider(self._mg_provider)
+        if self._mg_class is not None:
+            self.monogram.remove_css_class(self._mg_class)
+        r, g, b = B.hue_color(app.hue)
+        self._mg_class = f"mg{id(self)}"
+        self._mg_provider = Gtk.CssProvider()
+        self._mg_provider.load_from_string(
+            f".{self._mg_class} {{ background-color: rgb({r},{g},{b}); }}"
+        )
+        self.monogram.get_style_context().add_provider(
+            self._mg_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        )
+        self.monogram.add_css_class(self._mg_class)
+
     def refresh(self, state: B.AppState, tunnel: B.TunnelProc | None):
         app = state.app
+        self._paint_monogram(app)
         self.name_label.set_text(app.name)
         extra = " · start-on-launch" if app.start_on_launch else ""
         self.port_label.set_text(f"localhost:{app.port}{extra}")
@@ -150,15 +214,19 @@ class AppRow(Gtk.Box):
         live = bool(tunnel and tunnel.url)
         self._url = tunnel.url if tunnel else None
         self.url_label.set_text(self._url or "")
-        self.url_label.set_visible(live)
-        self.copy_btn.set_visible(live)
-        self.open_btn.set_visible(live)
+        self.pill.set_visible(live)
         self.switch.set_state(live)
         # Block signal feedback while syncing: state-set already returned; use set_active guard.
         self.switch.set_active(live)
 
         if tunnel and tunnel.url:
-            self.status_label.set_text("Live — close the window and the tunnel keeps running")
+            parts = []
+            if tunnel.since:
+                parts.append(B.format_uptime(time.monotonic() - tunnel.since))
+            st = tunnel.stats
+            parts.append(f"{st['active']} open · {st['total']} total")
+            parts.append(f"↓{B.format_bytes(st['bytes_in'])} ↑{B.format_bytes(st['bytes_out'])}")
+            self.status_label.set_text(" · ".join(parts))
         elif tunnel:
             tail = (tunnel.lines[-1] if tunnel.lines else "connecting…").strip()
             self.status_label.set_text(tail[-120:])
@@ -732,19 +800,39 @@ class MainWindow(Adw.ApplicationWindow):
         self.refresh_soon()
         return False
 
+    def _mark_live(self, tun: B.TunnelProc, url: str):
+        if tun.url is None:
+            tun.url = url
+            tun.since = time.monotonic()
+        GLib.idle_add(self._idle_refresh)
+
+    def _watch_stderr(self, tun: B.TunnelProc):
+        assert tun.proc.stderr is not None
+        for line in tun.proc.stderr:
+            text = line.strip()
+            if not text:
+                continue
+            stats = B.parse_stats_line(text)
+            if stats:
+                tun.stats.update(stats)
+                GLib.idle_add(self._idle_refresh)
+                continue
+            m = re.match(r"^live (\S+)", text)
+            if m:
+                self._mark_live(tun, m.group(1))
+                continue
+            if len(tun.lines) < 8:
+                tun.lines.append(text[-200:])
+                GLib.idle_add(self._idle_refresh)
+
     def _watch_tunnel(self, tun: B.TunnelProc):
         assert tun.proc.stdout is not None and tun.proc.stderr is not None
+        threading.Thread(target=self._watch_stderr, args=(tun,), daemon=True).start()
         for line in tun.proc.stdout:
             parsed = B.parse_live_line(line.strip())
             if parsed:
-                tun.url = parsed[1]
-                GLib.idle_add(self._idle_refresh)
-        # stdout closed: collect stderr tail for the error message
-        try:
-            err = tun.proc.stderr.read() or ""
-        except Exception:
-            err = ""
-        tun.lines.extend(err.strip().splitlines()[-3:])
+                self._mark_live(tun, parsed[1])
+        # stdout closed when the process ends; the stderr thread drains the rest.
         tun.proc.wait()
         # If still registered, the tunnel died on its own: keep record for error display briefly.
         GLib.idle_add(self._tunnel_exited, tun.app_id)
