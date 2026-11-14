@@ -2,3 +2,4 @@
 # Private business notes; not part of the open-source repo.
 docs/ROADMAP.md
 deploy/.env
+__pycache__/

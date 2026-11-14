@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# Launches the Localfly Linux GUI (Adwaita window + tray).
+exec python3 "$(dirname "$(readlink -f "$0")")/localfly_gui.py" "$@"

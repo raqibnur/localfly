@@ -2,7 +2,8 @@
 Type=Application
 Name=Localfly
 Comment=Your localhost, on the internet
-Exec=localfly list
-Terminal=true
+Exec=localfly-gui
+Terminal=false
 Categories=Development;Network;
 Keywords=tunnel;localhost;bore;expose;
+StartupWMClass=com.localfly.Localfly

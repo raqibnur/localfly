@@ -1,15 +1,16 @@
 # Localfly for Linux
 
-Your localhost, on the internet. A free, open-source CLI that gives any app on your Linux machine a public link.
+Your localhost, on the internet. A free, open-source app that gives any app on your Linux machine a public link — an Adwaita window + system tray, like the macOS menu bar app, over a Rust tunnel engine.
 
-Save an app by its port, expose it, and share the address. Test your site on your phone, show work to a client, or receive webhooks, all without deploying anything.
+Save an app by its port, flip the switch, and share the address. Test your site on your phone, show work to a client, or receive webhooks, all without deploying anything.
 
-- **Knows what's running**: `list` shows whether your dev server is up, and `on` won't open a tunnel to an empty port.
-- **Spots dev servers**: `scan` finds common ports like `:3000` and `:5173` ready to add.
-- **Live traffic**: bytes in/out and connection counts per tunnel.
-- **Reconnects by itself** with backoff and asks for the same address back.
+- **Window + tray first**: every app, its status and a copy button, one click away. Closing the window keeps tunnels running.
+- **Knows what's running**: a dot shows whether your dev server is up, and Localfly won't open a tunnel to an empty port.
+- **Spots dev servers**: common ports like `:3000` and `:5173` show up ready to add.
+- **Live traffic**: bytes in and out for each tunnel.
+- **Reconnects by itself** after Wi-Fi drops, and asks for the same address back.
 - **HTTPS on your own domain** when you [run your own relay](docs/self-hosting.md).
-- **Private by default**: nothing is exposed until you expose it. No account, no analytics. The relay secret lives in a `0600` file.
+- **Private by default**: nothing is exposed until you switch it on. No account, no analytics. The relay secret lives in a `0600` file.
 
 Localfly speaks the [bore](https://github.com/ekzhang/bore) tunnel protocol (v0.6). Your machine opens an outgoing connection to a relay server. When someone visits the public address, the relay passes the connection through to your machine. Nothing on your router or firewall changes.
 
@@ -34,9 +35,35 @@ cargo install --path .
 # binary: ~/.cargo/bin/localfly
 ```
 
-Requires a C toolchain + cargo (Arch: `pacman -S rust`; Debian: `apt install cargo`). No GTK/Qt dependency.
+Requires a C toolchain + cargo (Arch: `pacman -S rust`; Debian: `apt install cargo`).
 
-## Use
+## GUI (window + tray)
+
+```bash
+# system packages (Arch; Debian: python3-gi gir1.2-gtk-4.0 gir1.2-adw-1)
+sudo pacman -S --needed python-gobject gtk4 libadwaita
+cargo install --path .   # provides the `localfly` backend the GUI drives
+
+./gui/localfly-gui
+```
+
+The window mirrors the macOS app: sidebar (Apps / Relay / General / About),
+app cards with on/off switches, URL copy + open buttons, live status, add/edit
+dialogs, relay settings (server, secret, latency check) and start-on-login via
+a systemd user unit. Closing the window keeps tunnels running; Quit stops them.
+
+The tray uses StatusNotifierItem, so it shows in KDE, sway/waybar and GNOME
+(with the AppIndicator extension). Toggles per app, Open, Quit.
+
+Install both launchers:
+
+```bash
+install -Dm755 target/release/localfly ~/.local/bin/localfly
+install -Dm755 gui/localfly-gui ~/.local/bin/localfly-gui
+install -Dm644 com.localfly.Localfly.desktop ~/.local/share/applications/com.localfly.Localfly.desktop
+```
+
+## CLI use (headless / scripting)
 
 ```bash
 localfly add --name web --port 3000

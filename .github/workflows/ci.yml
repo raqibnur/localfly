@@ -18,3 +18,7 @@ jobs:
         run: cargo test --locked
       - name: Build
         run: cargo build --locked
+      - name: GUI checks (compile + headless backend tests)
+        run: |
+          python3 -m py_compile gui/localfly_backend.py gui/sni.py gui/localfly_gui.py gui/tests/test_backend.py
+          python3 -m unittest discover -s gui/tests -p "test_*.py"
