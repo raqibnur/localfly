@@ -166,3 +166,15 @@ Maintained by [9M2PJU](https://hamradio.my). Original macOS app by [Raqib Nur](h
 ## License
 
 [MIT](LICENSE) - © Raqib Nur for the original app; Linux port contributions under the same license.
+
+## Donate
+
+If Localfly saves you time, consider supporting the maintainer:
+
+<p align="center">
+  <img src="docs/images/donation-qr.png" width="220" alt="Donation QR code">
+</p>
+
+- [Buy me a coffee](https://www.buymeacoffee.com/9m2pju)
+- [PayPal](https://paypal.me/9M2PJU)
+- [Wise](https://wise.com/pay/me/faizulz13)
