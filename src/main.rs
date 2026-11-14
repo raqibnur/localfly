@@ -130,7 +130,9 @@ struct GlobalConfig {
 
 fn config_path() -> std::path::PathBuf {
     if let Ok(dir) = std::env::var("LOCALFLY_CONFIG") {
-        return std::path::PathBuf::from(dir).join("config.json");
+        if !dir.trim().is_empty() {
+            return std::path::PathBuf::from(dir).join("config.json");
+        }
     }
     dirs::config_dir().unwrap_or_else(|| std::path::PathBuf::from(".")).join("localfly").join("config.json")
 }

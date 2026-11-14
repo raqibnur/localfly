@@ -50,7 +50,9 @@ pub fn hue_for(name: &str) -> f64 {
 
 fn config_dir() -> PathBuf {
     if let Ok(dir) = std::env::var("LOCALFLY_CONFIG") {
-        return PathBuf::from(dir);
+        if !dir.trim().is_empty() {
+            return PathBuf::from(dir);
+        }
     }
     dirs::config_dir().unwrap_or_else(|| PathBuf::from(".")).join("localfly")
 }

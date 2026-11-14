@@ -3,3 +3,4 @@
 docs/ROADMAP.md
 deploy/.env
 __pycache__/
+/apps.json
