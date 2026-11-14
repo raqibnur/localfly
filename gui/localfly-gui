@@ -1,3 +1,9 @@
 #!/usr/bin/env sh
 # Launches the Localfly Linux GUI (Adwaita window + tray).
-exec python3 "$(dirname "$(readlink -f "$0")")/localfly_gui.py" "$@"
+for d in "$HOME/.local/share/localfly/gui" "/home/x/localfly/gui" "/usr/share/localfly/gui"; do
+    if [ -f "$d/localfly_gui.py" ]; then
+        exec python3 "$d/localfly_gui.py" "$@"
+    fi
+done
+echo "localfly_gui.py not found (looked in ~/.local/share/localfly/gui, /home/x/localfly/gui, /usr/share/localfly/gui)" >&2
+exit 1
