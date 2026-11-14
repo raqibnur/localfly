@@ -19,6 +19,16 @@ By default it uses **bore.pub**, a free public relay. For stable `https://` addr
 
 ## Install
 
+Prebuilt Linux binaries (x86_64 + aarch64) are attached to each GitHub release
+(`localfly-vX.Y.Z-<target>.tar.gz`, built by `.github/workflows/release.yml`):
+
+```bash
+tar -xzf localfly-v0.1.0-x86_64-unknown-linux-gnu.tar.gz
+sudo install -m755 localfly-*/localfly /usr/local/bin/
+```
+
+Or build from source:
+
 ```bash
 cargo install --path .
 # binary: ~/.cargo/bin/localfly
