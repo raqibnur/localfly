@@ -378,10 +378,33 @@ class MainWindow(Adw.ApplicationWindow):
         self.toast_overlay.set_child(split)
 
         side_page = Adw.NavigationPage(title="Localfly")
+        side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        side_page.set_child(side_box)
+        split.set_sidebar(side_page)
+
+        brand = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=10)
+        brand.set_margin_top(14)
+        brand.set_margin_bottom(6)
+        brand.set_margin_start(14)
+        brand.set_margin_end(14)
+        brand_logo = self.logo_image(36)
+        if brand_logo is not None:
+            brand.append(brand_logo)
+        brand_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
+        brand_text.set_valign(Gtk.Align.CENTER)
+        brand_title = Gtk.Label(label="Localfly", xalign=0)
+        brand_title.add_css_class("heading")
+        brand_text.append(brand_title)
+        brand_sub = Gtk.Label(label="localhost, everywhere", xalign=0)
+        brand_sub.add_css_class("caption")
+        brand_sub.add_css_class("localfly-dim")
+        brand_text.append(brand_sub)
+        brand.append(brand_text)
+        side_box.append(brand)
+
         sidebar = Gtk.ListBox(selection_mode=Gtk.SelectionMode.SINGLE)
         sidebar.add_css_class("navigation-sidebar")
-        side_page.set_child(sidebar)
-        split.set_sidebar(side_page)
+        side_box.append(sidebar)
 
         self.side_rows: dict[str, Gtk.ListBoxRow] = {}
         for key, title in [("apps", "Apps"), ("relay", "Relay"), ("general", "General"), ("about", "About")]:
@@ -439,6 +462,15 @@ class MainWindow(Adw.ApplicationWindow):
         view.add_top_bar(header)
         view.set_content(child)
         return view
+
+    def logo_image(self, size: int):
+        """Official logo from the icon theme, or None if not installed."""
+        theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
+        if theme is None or not theme.has_icon("localfly"):
+            return None
+        img = Gtk.Image.new_from_icon_name("localfly")
+        img.set_pixel_size(size)
+        return img
 
     # ----- navigation -----
     def on_navigate(self, _box, row):
@@ -674,8 +706,15 @@ class MainWindow(Adw.ApplicationWindow):
     # ----- about page -----
     def build_about_page(self):
         page = Adw.PreferencesPage()
-        group = Adw.PreferencesGroup(title="Localfly", description="Your localhost, on the internet.")
+        group = Adw.PreferencesGroup()
         page.add(group)
+        logo_row = Adw.ActionRow(
+            title="Localfly", subtitle="Your localhost, on the internet."
+        )
+        logo = self.logo_image(48)
+        if logo is not None:
+            logo_row.add_prefix(logo)
+        group.add(logo_row)
         group.add(Adw.ActionRow(title="Version", subtitle=VERSION))
         maintainer = Adw.ActionRow(
             title="Maintainer",

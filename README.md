@@ -22,6 +22,10 @@ By default it uses **bore.pub**, a free public relay. For stable `https://` addr
 
 > **Heads-up:** anyone with a tunnel's address can reach that app while it's on. Only share what you mean to share.
 
+<p align="center">
+  <img src="docs/images/app.png" width="760" alt="The Localfly window with one saved app, live at a bore.pub address">
+</p>
+
 ## Install
 
 One-liner (user-local, no root):
