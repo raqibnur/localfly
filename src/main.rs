@@ -512,7 +512,7 @@ async fn main() -> Result<(), AnyErr> {
 
 async fn update_check() -> Result<Option<(String, String)>, AnyErr> {
     // Mirrors App/UpdateChecker.swift: read-only GitHub latest-release check.
-    let body = reqwest_like_get("https://api.github.com/repos/raqibnur/localfly/releases/latest").await?;
+    let body = reqwest_like_get("https://api.github.com/repos/9M2PJU/localfly-linux/releases/latest").await?;
     let v: serde_json::Value = serde_json::from_str(&body)?;
     if v.get("draft").and_then(|d| d.as_bool()).unwrap_or(false)
         || v.get("prerelease").and_then(|p| p.as_bool()).unwrap_or(false)

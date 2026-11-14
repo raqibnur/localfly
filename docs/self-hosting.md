@@ -28,7 +28,7 @@ Create an A record for each name you want, or one wildcard record:
 Install Docker, then on the server:
 
 ```bash
-git clone https://github.com/raqibnur/localfly.git
+git clone https://github.com/9M2PJU/localfly-linux.git
 cd localfly/deploy
 cp .env.example .env
 sed -i "s/change-me/$(openssl rand -hex 24)/" .env   # generates the secret
