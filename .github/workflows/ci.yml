@@ -18,6 +18,10 @@ jobs:
         run: cargo test --locked
       - name: Build
         run: cargo build --locked
+      - name: Generated shell completions and man pages are fresh
+        run: |
+          cargo run --locked --example gen_assets
+          git diff --exit-code -- packaging/generated || (echo "run 'cargo run --example gen_assets' and commit" >&2; exit 1)
       - name: GUI checks (compile + headless backend tests)
         run: |
           python3 -m py_compile gui/localfly_backend.py gui/sni.py gui/localfly_gui.py gui/tests/test_backend.py

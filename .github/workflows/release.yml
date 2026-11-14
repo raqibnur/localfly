@@ -33,11 +33,20 @@ jobs:
         run: cargo test --locked --target ${{ matrix.target }}
       - name: Build release
         run: cargo build --locked --release --target ${{ matrix.target }}
+      - name: Generate shell completions and man pages
+        run: cargo run --quiet --example gen_assets
       - name: Package
         run: |
           PKG="localfly-${GITHUB_REF_NAME}-${{ matrix.target }}"
-          mkdir -p "$PKG"
+          mkdir -p "$PKG/gui" "$PKG/completions"
           cp "target/${{ matrix.target }}/release/localfly" "$PKG/"
+          cp "target/${{ matrix.target }}/release/localflyd" "$PKG/"
+          cp gui/localfly_gui.py gui/localfly_backend.py gui/sni.py gui/localfly-gui "$PKG/gui/"
+          cp -r packaging/generated/completions "$PKG/"
+          cp -r packaging/generated/man "$PKG/"
+          cp packaging/com.localfly.Localfly.metainfo.xml "$PKG/"
+          cp packaging/icons/localfly.png packaging/icons/localfly-48.png "$PKG/"
+          cp packaging/icons/localfly-live.png packaging/icons/localfly-live-48.png "$PKG/"
           cp localfly.service com.localfly.Localfly.desktop README.md LICENSE "$PKG/"
           tar -czf "$PKG.tar.gz" "$PKG"
           echo "PKG=$PKG.tar.gz" >> "$GITHUB_ENV"

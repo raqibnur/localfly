@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.localfly.Localfly</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Localfly Linux</name>
+  <summary>Your localhost, on the internet</summary>
+  <description>
+    <p>
+      Save an app by its port, flip the switch, and share the address.
+      Test your site on your phone, show work to a client, or receive
+      webhooks, all without deploying anything.
+    </p>
+    <p>
+      Localfly Linux speaks the bore tunnel protocol: your machine opens an
+      outgoing connection to a relay server, which passes visitors through
+      to your localhost. Nothing on your router or firewall changes.
+    </p>
+  </description>
+  <developer>
+    <name>9M2PJU</name>
+  </developer>
+  <icon type="stock">localfly</icon>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/9M2PJU/localfly-linux/main/docs/images/app.png</image>
+      <caption>The Localfly Linux window with one saved app, live at a bore.pub address</caption>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://hamradio.my</url>
+  <url type="bugtracker">https://github.com/9M2PJU/localfly-linux/issues</url>
+  <url type="vcs-browser">https://github.com/9M2PJU/localfly-linux</url>
+  <url type="donation">https://www.buymeacoffee.com/9m2pju</url>
+  <provides>
+    <binary>localfly</binary>
+    <binary>localfly-gui</binary>
+    <binary>localflyd</binary>
+  </provides>
+  <launchable type="desktop-id">com.localfly.Localfly.desktop</launchable>
+  <categories>
+    <category>Development</category>
+    <category>Network</category>
+  </categories>
+  <releases>
+    <release version="0.1.1" date="2026-11-14">
+      <description>
+        <p>Tunnel daemon with auto-spawn and idle exit, live status command, QR codes, desktop notifications, relay latency, shell completions and man pages.</p>
+      </description>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1" />
+</component>

@@ -29,6 +29,10 @@ contents:
     dst: /usr/bin/localfly
     type: file
     file_info: { mode: 0755 }
+  - src: target/release/localflyd
+    dst: /usr/bin/localflyd
+    type: file
+    file_info: { mode: 0755 }
   - src: gui/localfly-gui
     dst: /usr/bin/localfly-gui
     type: file
@@ -49,12 +53,56 @@ contents:
     dst: /usr/share/applications/com.localfly.Localfly.desktop
     type: file
     file_info: { mode: 0644 }
+  - src: packaging/com.localfly.Localfly.metainfo.xml
+    dst: /usr/share/metainfo/com.localfly.Localfly.metainfo.xml
+    type: file
+    file_info: { mode: 0644 }
   - src: packaging/icons/localfly.png
     dst: /usr/share/icons/hicolor/256x256/apps/localfly.png
     type: file
     file_info: { mode: 0644 }
   - src: packaging/icons/localfly-48.png
     dst: /usr/share/icons/hicolor/48x48/apps/localfly.png
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/icons/localfly-live.png
+    dst: /usr/share/icons/hicolor/256x256/apps/localfly-live.png
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/icons/localfly-live-48.png
+    dst: /usr/share/icons/hicolor/48x48/apps/localfly-live.png
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/completions/localfly.bash
+    dst: /usr/share/bash-completion/completions/localfly
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/completions/localflyd.bash
+    dst: /usr/share/bash-completion/completions/localflyd
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/completions/_localfly
+    dst: /usr/share/zsh/site-functions/_localfly
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/completions/_localflyd
+    dst: /usr/share/zsh/site-functions/_localflyd
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/completions/localfly.fish
+    dst: /usr/share/fish/vendor_completions.d/localfly.fish
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/completions/localflyd.fish
+    dst: /usr/share/fish/vendor_completions.d/localflyd.fish
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/man/localfly.1
+    dst: /usr/share/man/man1/localfly.1
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/generated/man/localflyd.1
+    dst: /usr/share/man/man1/localflyd.1
     type: file
     file_info: { mode: 0644 }
   - src: packaging/localfly.service

@@ -38,9 +38,9 @@ BIN="$PREFIX/bin"
 SHARE="$PREFIX/share"
 
 uninstall() {
-  rm -f "$BIN/localfly" "$BIN/localfly-gui"
+  rm -f "$BIN/localfly" "$BIN/localflyd" "$BIN/localfly-gui"
   rm -rf "$SHARE/localfly"
-  rm -f "$SHARE/applications/com.localfly.Localfly.desktop" "$SHARE/icons/hicolor/256x256/apps/localfly.png"
+  rm -f "$SHARE/applications/com.localfly.Localfly.desktop" "$SHARE/icons/hicolor/256x256/apps/localfly.png" "$SHARE/icons/hicolor/256x256/apps/localfly-live.png"
   echo "Localfly Linux removed from $PREFIX."
 }
 
@@ -67,22 +67,39 @@ tar -xzf "$TMP/pkg.tar.gz" -C "$TMP"
 PKGDIR=$(echo "$TMP"/localfly-*)
 
 as_root install -Dm755 "$PKGDIR"/localfly "$BIN/localfly"
+as_root install -Dm755 "$PKGDIR"/localflyd "$BIN/localflyd"
 
 # GUI (needs system python3-gi + gtk4 + libadwaita; see README).
-# Fetched version-pinned from this release tag so CLI and GUI match.
+# Prefers the release tarball (0.1.1+ bundles the GUI), falls back to
+# version-pinned raw files so older tarballs keep working.
 echo "Installing GUI ..."
-for f in gui/localfly_backend.py gui/localfly_gui.py gui/sni.py; do
-  curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/$f" -o "$TMP/g.py" \
-    || { echo "Could not fetch $f." >&2; exit 1; }
-  # shellcheck disable=SC2086
-  as_root install -Dm644 "$TMP/g.py" "$SHARE/localfly/$f"
-done
+if [ -f "$PKGDIR/gui/localfly_gui.py" ]; then
+  as_root install -Dm644 "$PKGDIR/gui/localfly_backend.py" "$SHARE/localfly/gui/localfly_backend.py"
+  as_root install -Dm644 "$PKGDIR/gui/localfly_gui.py" "$SHARE/localfly/gui/localfly_gui.py"
+  as_root install -Dm644 "$PKGDIR/gui/sni.py" "$SHARE/localfly/gui/sni.py"
+else
+  for f in gui/localfly_backend.py gui/localfly_gui.py gui/sni.py; do
+    curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/$f" -o "$TMP/g.py" \
+      || { echo "Could not fetch $f." >&2; exit 1; }
+    as_root install -Dm644 "$TMP/g.py" "$SHARE/localfly/$f"
+  done
+fi
 printf '#!/usr/bin/env sh\nexec python3 "%s/localfly/gui/localfly_gui.py" "$@"\n' "$SHARE" > "$TMP/localfly-gui"
 as_root install -Dm755 "$TMP/localfly-gui" "$BIN/localfly-gui"
-curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/com.localfly.Localfly.desktop" -o "$TMP/desktop" \
-  && as_root install -Dm644 "$TMP/desktop" "$SHARE/applications/com.localfly.Localfly.desktop" || true
-curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/packaging/icons/localfly.png" -o "$TMP/icon.png" 2>/dev/null \
-  && as_root install -Dm644 "$TMP/icon.png" "$SHARE/icons/hicolor/256x256/apps/localfly.png" || true
+if [ -f "$PKGDIR/com.localfly.Localfly.desktop" ]; then
+  as_root install -Dm644 "$PKGDIR/com.localfly.Localfly.desktop" "$SHARE/applications/com.localfly.Localfly.desktop"
+else
+  curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/com.localfly.Localfly.desktop" -o "$TMP/desktop" \
+    && as_root install -Dm644 "$TMP/desktop" "$SHARE/applications/com.localfly.Localfly.desktop" || true
+fi
+for _icon in localfly localfly-live; do
+  if [ -f "$PKGDIR/${_icon}.png" ]; then
+    as_root install -Dm644 "$PKGDIR/${_icon}.png" "$SHARE/icons/hicolor/256x256/apps/${_icon}.png"
+  else
+    curl -fsSL "https://raw.githubusercontent.com/${REPO}/${TAG}/packaging/icons/${_icon}.png" -o "$TMP/icon.png" 2>/dev/null \
+      && as_root install -Dm644 "$TMP/icon.png" "$SHARE/icons/hicolor/256x256/apps/${_icon}.png" || true
+  fi
+done
 echo "GUI installed (requires: python3-gi gir1.2-gtk-4.0 gir1.2-adw-1)."
 
 echo "Done. Make sure $BIN is on your PATH, then run: localfly --help"
