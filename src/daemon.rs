@@ -1,6 +1,6 @@
 //! `localflyd` wire protocol: newline-delimited JSON over a Unix socket.
 //!
-//! One request per connection, one JSON line back — except `subscribe`,
+//! One request per connection, one JSON line back (except `subscribe`, which streams)
 //! which streams one JSON line per tunnel update until the client hangs up.
 //! The socket lives at `$XDG_RUNTIME_DIR/localfly.sock` (same-UID only).
 

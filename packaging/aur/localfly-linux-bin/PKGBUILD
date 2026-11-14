@@ -2,7 +2,7 @@
 pkgname=localfly-linux-bin
 pkgver=0.1.1
 pkgrel=1
-pkgdesc="Your localhost, on the internet — bore tunnels with an Adwaita window + tray (prebuilt)"
+pkgdesc="Your localhost, on the internet - bore tunnels with an Adwaita window + tray (prebuilt)"
 arch=('x86_64' 'aarch64')
 url="https://github.com/9M2PJU/localfly-linux"
 license=('MIT')
@@ -12,9 +12,9 @@ optdepends=('qrencode: QR codes for phone testing'
 provides=('localfly-linux')
 conflicts=('localfly-linux' 'localfly-linux-git')
 source_x86_64=("localfly-v0.1.1-x86_64-unknown-linux-gnu.tar.gz::https://github.com/9M2PJU/localfly-linux/releases/download/v0.1.1/localfly-v0.1.1-x86_64-unknown-linux-gnu.tar.gz")
-sha256sums_x86_64=('REPLACE_X86_64')
+sha256sums_x86_64=('992aed25b74e8d5062367d260a30feb4ea089c5a5c02b5a4d7e053c6e2877ed8')
 source_aarch64=("localfly-v0.1.1-aarch64-unknown-linux-gnu.tar.gz::https://github.com/9M2PJU/localfly-linux/releases/download/v0.1.1/localfly-v0.1.1-aarch64-unknown-linux-gnu.tar.gz")
-sha256sums_aarch64=('REPLACE_AARCH64')
+sha256sums_aarch64=('ad7511618a13bff374eb8f3b35a288502b3a65132cbb77c5ac3f0abd62854400')
 
 package() {
   cd "localfly-v${pkgver}-${CARCH}-unknown-linux-gnu"
@@ -29,7 +29,7 @@ package() {
   install -Dm644 localfly.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/localfly.png"
   install -Dm644 localfly-48.png "$pkgdir/usr/share/icons/hicolor/48x48/apps/localfly.png"
   install -Dm644 localfly-live.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/localfly-live.png"
-  install -Dm644 localfly-live-48.png "$pkgdir/usr/share/icons/hicolor/48x48/apps/localfly-live-48.png"
+  install -Dm644 localfly-live-48.png "$pkgdir/usr/share/icons/hicolor/48x48/apps/localfly-live.png"
   install -Dm644 completions/localfly.bash "$pkgdir/usr/share/bash-completion/completions/localfly"
   install -Dm644 completions/localflyd.bash "$pkgdir/usr/share/bash-completion/completions/localflyd"
   install -Dm644 completions/_localfly "$pkgdir/usr/share/zsh/site-functions/_localfly"

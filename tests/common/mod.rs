@@ -1,7 +1,7 @@
 //! Shared fixtures for live-relay tests (real `bore server` on 127.0.0.1:7835).
 //!
 //! The bore control port is fixed, so every test that needs a relay must
-//! hold [`bore_lock()`] — this also serializes across test binaries, which
+//! hold [`bore_lock()`], which also serializes across test binaries, which
 //! cargo runs in parallel.
 
 use localfly_lib::probe;
