@@ -1,5 +1,5 @@
 //! One bore client session: control connection + one proxied pair per visitor.
-//! Port of LocalflyCore/BoreClient.swift from Network.framework to tokio.
+//! Port of the original macOS app Swift core (BoreClient.swift) from Network.framework to tokio.
 
 use crate::bore::{self, FrameReader, ServerMessage};
 use std::sync::{

@@ -1,4 +1,4 @@
-//! TCP liveness probes, ported from LocalflyCore/PortProbe.swift.
+//! TCP liveness probes, ported from the original macOS app Swift core (PortProbe.swift).
 
 use std::net::ToSocketAddrs;
 use std::time::{Duration, Instant};

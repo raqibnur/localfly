@@ -1,7 +1,7 @@
-# Localfly for Linux
+# Localfly Linux
 
 <p align="center">
-  <img src="packaging/icons/localfly.png" width="96" height="96" alt="Localfly logo">
+  <img src="packaging/icons/localfly.png" width="96" height="96" alt="Localfly Linux logo">
 </p>
 
 Your localhost, on the internet. A free, open-source app that gives any app on your Linux machine a public link - an Adwaita window + system tray, like the macOS menu bar app, over a Rust tunnel engine.
@@ -9,21 +9,21 @@ Your localhost, on the internet. A free, open-source app that gives any app on y
 Save an app by its port, flip the switch, and share the address. Test your site on your phone, show work to a client, or receive webhooks, all without deploying anything.
 
 - **Window + tray first**: every app, its status and a copy button, one click away. Closing the window keeps tunnels running.
-- **Knows what's running**: a dot shows whether your dev server is up, and Localfly won't open a tunnel to an empty port.
+- **Knows what's running**: a dot shows whether your dev server is up, and Localfly Linux won't open a tunnel to an empty port.
 - **Spots dev servers**: common ports like `:3000` and `:5173` show up ready to add.
 - **Live traffic**: bytes in and out for each tunnel.
 - **Reconnects by itself** after Wi-Fi drops, and asks for the same address back.
 - **HTTPS on your own domain** when you [run your own relay](docs/self-hosting.md).
 - **Private by default**: nothing is exposed until you switch it on. No account, no analytics. The relay secret lives in a `0600` file.
 
-Localfly speaks the [bore](https://github.com/ekzhang/bore) tunnel protocol (v0.6). Your machine opens an outgoing connection to a relay server. When someone visits the public address, the relay passes the connection through to your machine. Nothing on your router or firewall changes.
+Localfly Linux speaks the [bore](https://github.com/ekzhang/bore) tunnel protocol (v0.6). Your machine opens an outgoing connection to a relay server. When someone visits the public address, the relay passes the connection through to your machine. Nothing on your router or firewall changes.
 
 By default it uses **bore.pub**, a free public relay. For stable `https://` addresses on your own domain, set up your own relay with [the self-hosting guide](docs/self-hosting.md).
 
 > **Heads-up:** anyone with a tunnel's address can reach that app while it's on. Only share what you mean to share.
 
 <p align="center">
-  <img src="docs/images/app.png" width="760" alt="The Localfly window with one saved app, live at a bore.pub address">
+  <img src="docs/images/app.png" width="760" alt="The Localfly Linux window with one saved app, live at a bore.pub address">
 </p>
 
 ## Install
@@ -169,7 +169,7 @@ Maintained by [9M2PJU](https://hamradio.my). Original macOS app by [Raqib Nur](h
 
 ## Donate
 
-If Localfly saves you time, consider supporting the maintainer:
+If Localfly Linux saves you time, consider supporting the maintainer:
 
 <p align="center">
   <img src="docs/images/donation-qr.png" width="220" alt="Donation QR code">

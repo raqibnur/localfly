@@ -1,4 +1,4 @@
-"""StatusNotifierItem tray for the Localfly GUI (pure Gio D-Bus, GTK4-safe).
+"""StatusNotifierItem tray for the Localfly Linux GUI (pure Gio D-Bus, GTK4-safe).
 
 Implements org.kde.StatusNotifierItem + com.canonical.dbusmenu over the
 session bus so the tray shows wherever a StatusNotifierWatcher runs
@@ -114,7 +114,7 @@ class Tray:
         self.revision = 1
         self.items: list[MenuItem] = []
         self.status = "Active"
-        self.tooltip_title = "Localfly"
+        self.tooltip_title = "Localfly Linux"
         self.tooltip_body = ""
         self.on_show_menu = on_show_menu  # called on left-click (Activate)
         self._ids: list[int] = []
@@ -209,7 +209,7 @@ class Tray:
         if name == "Id":
             return GLib.Variant("s", "localfly")
         if name == "Title":
-            return GLib.Variant("s", "Localfly")
+            return GLib.Variant("s", "Localfly Linux")
         if name == "Status":
             return GLib.Variant("s", self.status)
         if name == "IconName":
@@ -224,7 +224,7 @@ class Tray:
         if name == "ToolTip":
             return GLib.Variant(
                 "(sa(iiay)av)",
-                ("Localfly", [], [GLib.Variant("s", self.tooltip_body or "Localfly")]),
+                ("Localfly Linux", [], [GLib.Variant("s", self.tooltip_body or "Localfly Linux")]),
             )
         return None
 

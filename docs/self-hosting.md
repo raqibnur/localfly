@@ -1,6 +1,6 @@
 # Self-hosting a relay
 
-By default Localfly uses the free public relay at bore.pub. Running your own relay gets you:
+By default Localfly Linux uses the free public relay at bore.pub. Running your own relay gets you:
 
 - **HTTPS addresses on your domain**, like `https://web.yourdomain.com`
 - **Addresses that never change**, so webhooks and shared links keep working
@@ -20,7 +20,7 @@ Create an A record for each name you want, or one wildcard record:
 
 | Port | For |
 |---|---|
-| 7835/tcp | Localfly connecting to the relay |
+| 7835/tcp | Localfly Linux connecting to the relay |
 | 80/tcp, 443/tcp | Caddy (HTTPS, and the certificate challenge) |
 
 ## 3. Start the relay
@@ -38,7 +38,7 @@ docker compose up -d
 
 `docker compose logs -f` shows Caddy fetching certificates. After editing `Caddyfile`, apply it with `docker compose restart caddy`.
 
-## 4. Connect Localfly
+## 4. Connect Localfly Linux
 
 ```bash
 localfly config --relay yourdomain.com --secret "$(grep BORE_SECRET .env | cut -d= -f2)"
@@ -68,7 +68,7 @@ Then install [Caddy](https://caddyserver.com/docs/install) with the same `Caddyf
 
 ## Troubleshooting
 
-| Localfly says | Meaning |
+| Localfly Linux says | Meaning |
 |---|---|
 | Couldn’t reach relay | Port 7835 is blocked, or the server address is wrong. |
 | This relay requires a secret | Set it with `localfly config --secret …`. |

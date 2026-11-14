@@ -1,4 +1,4 @@
-//! Tunnel lifecycle, ported from LocalflyCore/TunnelManager.swift.
+//! Tunnel lifecycle, ported from the original macOS app Swift core (TunnelManager.swift).
 
 use crate::bore::parse_relay;
 use crate::client::{self, Event};

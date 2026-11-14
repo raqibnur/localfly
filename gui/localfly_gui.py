@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Localfly GUI for Linux: Adwaita window + tray, mirroring the macOS app.
+"""Localfly Linux GUI: Adwaita window + tray, mirroring the macOS app.
 
 Main window (like MainWindow: sidebar Apps/Relay/General/About), app cards
 with on/off switches, URL copy/open, live stats, add/edit dialogs, relay and
@@ -39,7 +39,7 @@ def css():
     provider = Gtk.CssProvider()
     provider.load_from_string(
         """
-        /* Official Localfly flare: orange accent like the macOS app.
+        /* Official Localfly Linux flare: orange accent like the macOS app.
            Named colors first (theme-respecting), then explicit rules so the
            flare shows even where libadwaita reads theme variables. */
         @define-color accent_bg_color #e86a17;
@@ -281,7 +281,7 @@ class AppEditor(Gtk.Window):
 
         self.name_entry = row(0, "Name", Gtk.Entry(placeholder_text="e.g. web"))
         self.port_entry = row(1, "Port", Gtk.Entry(placeholder_text="3000"))
-        self.start_row = Gtk.CheckButton(label="Start tunnel when Localfly opens")
+        self.start_row = Gtk.CheckButton(label="Start tunnel when Localfly Linux opens")
         grid.attach(self.start_row, 1, 2, 1, 1)
         self.pubport_entry = row(3, "Public port", Gtk.Entry(placeholder_text="Random"))
         self.addr_entry = row(4, "Address", Gtk.Entry(placeholder_text="https://web.yourdomain.com"))
@@ -359,7 +359,7 @@ class AppEditor(Gtk.Window):
 
 class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application):
-        super().__init__(application=app, title="Localfly")
+        super().__init__(application=app, title="Localfly Linux")
         self.set_default_size(900, 600)
         self.tunnels: dict[str, B.TunnelProc] = {}
         self.states: list[B.AppState] = []
@@ -377,7 +377,7 @@ class MainWindow(Adw.ApplicationWindow):
         split = Adw.NavigationSplitView()
         self.toast_overlay.set_child(split)
 
-        side_page = Adw.NavigationPage(title="Localfly")
+        side_page = Adw.NavigationPage(title="Localfly Linux")
         side_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         side_page.set_child(side_box)
         split.set_sidebar(side_page)
@@ -392,7 +392,7 @@ class MainWindow(Adw.ApplicationWindow):
             brand.append(brand_logo)
         brand_text = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=1)
         brand_text.set_valign(Gtk.Align.CENTER)
-        brand_title = Gtk.Label(label="Localfly", xalign=0)
+        brand_title = Gtk.Label(label="Localfly Linux", xalign=0)
         brand_title.add_css_class("heading")
         brand_text.append(brand_title)
         brand_sub = Gtk.Label(label="localhost, everywhere", xalign=0)
@@ -640,7 +640,7 @@ class MainWindow(Adw.ApplicationWindow):
     def unit_content(self):
         return (
             "[Unit]\n"
-            "Description=Localfly - expose saved localhost apps via bore\n"
+            "Description=Localfly Linux - expose saved localhost apps via bore\n"
             "After=network-online.target\n"
             "Wants=network-online.target\n"
             "\n"
@@ -709,7 +709,7 @@ class MainWindow(Adw.ApplicationWindow):
         group = Adw.PreferencesGroup()
         page.add(group)
         logo_row = Adw.ActionRow(
-            title="Localfly", subtitle="Your localhost, on the internet."
+            title="Localfly Linux", subtitle="Your localhost, on the internet"
         )
         logo = self.logo_image(48)
         if logo is not None:
@@ -974,7 +974,7 @@ class MainWindow(Adw.ApplicationWindow):
             return
         live = sum(1 for t in self.tunnels.values() if t.url)
         total = len(self.states)
-        items = [MenuItem(id=1, label=f"Localfly - {live}/{total} live", enabled=False)]
+        items = [MenuItem(id=1, label=f"Localfly Linux - {live}/{total} live", enabled=False)]
         next_id = 10
         self._tray_app_ids = {}
         for st in self.states:
@@ -988,8 +988,8 @@ class MainWindow(Adw.ApplicationWindow):
                          checkmark=True, checked=on, on_clicked=self._tray_toggle_cb(app.id))
             )
         items.append(MenuItem(id=2, separator=True, label=""))
-        items.append(MenuItem(id=10000, label="Open Localfly", on_clicked=self.show_from_tray))
-        items.append(MenuItem(id=10001, label="Quit Localfly", on_clicked=self.quit_app))
+        items.append(MenuItem(id=10000, label="Open Localfly Linux", on_clicked=self.show_from_tray))
+        items.append(MenuItem(id=10001, label="Quit Localfly Linux", on_clicked=self.quit_app))
         self.tray.set_menu(
             items,
             status="Active" if live else "Active",
@@ -1022,7 +1022,7 @@ class MainWindow(Adw.ApplicationWindow):
         self.get_application().quit()
 
 
-class LocalflyApp(Adw.Application):
+class LocalflyLinuxApp(Adw.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID)
         act_quit = Gio.SimpleAction.new("quit", None)
@@ -1059,7 +1059,7 @@ def main(argv=None):
     if "--version" in argv or "-V" in argv:
         print(f"localfly-gui {VERSION}")
         return 0
-    app = LocalflyApp()
+    app = LocalflyLinuxApp()
     return app.run([sys.argv[0], *argv])
 
 

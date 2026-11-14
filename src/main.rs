@@ -7,7 +7,7 @@ use uuid::Uuid;
 const COMMON_PORTS: &[u16] = &[3000, 3001, 3333, 4000, 4200, 4321, 5173, 5174, 8000, 8080, 8081, 8888, 1313];
 
 #[derive(Parser)]
-#[command(name = "localfly", version, about = "Your localhost, on the internet (Linux port of Localfly)")]
+#[command(name = "localfly", version, about = "Your localhost, on the internet (Localfly Linux)")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,

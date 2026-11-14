@@ -1,4 +1,4 @@
-//! bore v0.6 wire protocol, ported from LocalflyCore/BoreProtocol.swift.
+//! bore v0.6 wire protocol, ported from the original macOS app Swift core (BoreProtocol.swift).
 //!
 //! Every control message is JSON encoded like serde_json encodes a Rust enum,
 //! terminated by one NUL byte. Unit variants are bare strings ("Heartbeat"),

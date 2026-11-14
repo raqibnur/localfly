@@ -25,10 +25,10 @@ r = B.run_cli("config", "--relay", "127.0.0.1")
 assert r.returncode == 0, r.stderr
 
 from gi.repository import GLib
-from localfly_gui import LocalflyApp
+from localfly_gui import LocalflyLinuxApp
 
 results = {}
-app = LocalflyApp()
+app = LocalflyLinuxApp()
 win = None
 
 

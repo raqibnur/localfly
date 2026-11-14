@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
-# Localfly for Linux - one-liner install (no root needed).
+# Localfly Linux - one-liner install (no root needed).
 #
 #   curl -fsSL https://raw.githubusercontent.com/9M2PJU/localfly-linux/main/install.sh | sh
 #
@@ -41,7 +41,7 @@ uninstall() {
   rm -f "$BIN/localfly" "$BIN/localfly-gui"
   rm -rf "$SHARE/localfly"
   rm -f "$SHARE/applications/com.localfly.Localfly.desktop" "$SHARE/icons/hicolor/256x256/apps/localfly.png"
-  echo "Localfly removed from $PREFIX."
+  echo "Localfly Linux removed from $PREFIX."
 }
 
 if [ "$UNINSTALL" -eq 1 ]; then uninstall; exit 0; fi

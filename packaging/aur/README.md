@@ -3,8 +3,8 @@
 Two packages, both maintained here and pushed to the AUR with the
 `aur` SSH key (`ssh://aur@aur.archlinux.org/<pkg>.git`):
 
-- `localfly-linux-git` — builds from git main (always fresh).
-- `localfly-linux-bin` — prebuilt release tarball + GUI files pinned to the tag.
+- `localfly-linux-git` - builds from git main (always fresh).
+- `localfly-linux-bin` - prebuilt release tarball + GUI files pinned to the tag.
 
 ## New release checklist
 
