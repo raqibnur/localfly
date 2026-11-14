@@ -118,7 +118,7 @@ docs/           self-hosting guide
 
 Issues and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). Report security problems privately as described in [SECURITY.md](SECURITY.md).
 
-Maintained by [9M2PJU](https://github.com/9M2PJU). Original macOS app by [Raqib Nur](https://github.com/raqibnur) ([raqibnur/localfly](https://github.com/raqibnur/localfly)).
+Maintained by [9M2PJU](https://hamradio.my). Original macOS app by [Raqib Nur](https://github.com/raqibnur) ([raqibnur/localfly](https://github.com/raqibnur/localfly)).
 
 ## License
 

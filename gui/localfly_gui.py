@@ -609,7 +609,16 @@ class MainWindow(Adw.ApplicationWindow):
         group = Adw.PreferencesGroup(title="Localfly", description="Your localhost, on the internet.")
         page.add(group)
         group.add(Adw.ActionRow(title="Version", subtitle=VERSION))
-        group.add(Adw.ActionRow(title="Maintainer", subtitle="9M2PJU"))
+        maintainer = Adw.ActionRow(
+            title="Maintainer",
+            subtitle="9M2PJU — hamradio.my. Click to open.",
+        )
+        maintainer.set_activatable(True)
+        maintainer.connect(
+            "activated",
+            lambda *_: Gio.AppInfo.launch_default_for_uri("https://hamradio.my", None),
+        )
+        group.add(maintainer)
         credit = Adw.ActionRow(
             title="Original macOS app",
             subtitle="Raqib Nur — raqibnur/localfly (MIT). Click to open.",

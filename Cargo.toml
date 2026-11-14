@@ -5,7 +5,7 @@ edition = "2021"
 description = "Localfly for Linux: expose localhost over bore tunnels (port of the macOS app)"
 license = "MIT"
 authors = ["9M2PJU"]
-homepage = "https://github.com/9M2PJU/localfly"
+homepage = "https://hamradio.my"
 repository = "https://github.com/9M2PJU/localfly"
 
 [lib]
