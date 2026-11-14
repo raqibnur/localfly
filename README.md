@@ -44,6 +44,31 @@ Or pick your distro:
 | Any distro (AppImage) | download `Localfly-*.AppImage` from [releases](https://github.com/9M2PJU/localfly-linux/releases), `chmod +x`, run |
 | From source | `cargo install --path .` |
 
+### Arch Linux
+
+```bash
+yay -S localfly-linux-bin   # prebuilt, fast
+# or: yay -S localfly-linux-git  # builds from git main
+```
+
+Manual build without an AUR helper:
+
+```bash
+git clone https://aur.archlinux.org/localfly-linux-bin.git  # or localfly-linux-git
+cd localfly-linux-bin
+makepkg -si
+```
+
+This installs the CLI (`localfly`), the GUI launcher (`localfly-gui`),
+the desktop entry, the official icon, and the systemd user unit.
+Start the GUI from your app menu, or run `localfly-gui` from a terminal.
+Optional: enable tunnels at login from the app's General page
+(which enables `localfly.service --user`), or manually:
+
+```bash
+systemctl --user enable --now localfly.service
+```
+
 Requires a C toolchain + cargo for source builds (Arch: `pacman -S rust`; Debian: `apt install cargo`).
 The GUI additionally needs `python3-gi` + GTK4 + libadwaita
 (Arch: `python-gobject gtk4 libadwaita`; Debian: `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1`).
