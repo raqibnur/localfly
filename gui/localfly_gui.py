@@ -9,11 +9,13 @@ Quit stops them. Backend tunnels run via the `localfly` CLI binary.
 from __future__ import annotations
 
 import os
-import re
+import shutil
 import subprocess
 import sys
+import tempfile
 import threading
 import time
+import uuid
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import localfly_backend as B
@@ -39,19 +41,18 @@ def css():
     provider = Gtk.CssProvider()
     provider.load_from_string(
         """
-        /* Official Localfly Linux flare: orange accent like the macOS app.
-           Named colors first (theme-respecting), then explicit rules so the
-           flare shows even where libadwaita reads theme variables. */
-        @define-color accent_bg_color #e86a17;
+        /* Localfly Linux accent: Arch blue. The official logo and the
+           green live indicators stay untouched; blue means interactive. */
+        @define-color accent_bg_color #1793d1;
         @define-color accent_fg_color #ffffff;
-        @define-color accent_color #e86a17;
-        switch:checked { background-color: #e86a17; }
+        @define-color accent_color #1793d1;
+        switch:checked { background-color: #1793d1; }
         switch:checked slider { background: #ffffff; }
         button.suggested-action {
-            background: #e86a17; color: #ffffff;
+            background: #1793d1; color: #ffffff;
         }
-        button.suggested-action:hover { background: shade(#e86a17, 1.08); }
-        button.suggested-action:active { background: shade(#e86a17, 0.92); }
+        button.suggested-action:hover { background: shade(#1793d1, 1.08); }
+        button.suggested-action:active { background: shade(#1793d1, 0.92); }
         .localfly-dot { font-size: 14px; }
         .localfly-url { font-family: monospace; font-size: 12px; }
         .localfly-dim { opacity: 0.65; }
@@ -139,6 +140,12 @@ class AppRow(Gtk.Box):
         self.open_btn.connect("clicked", self.on_open)
         self.pill.append(self.open_btn)
 
+        self.qr_btn = Gtk.Button(icon_name="view-grid-symbolic", tooltip_text="Show QR code for phones")
+        self.qr_btn.add_css_class("flat")
+        self.qr_btn.connect("clicked", self.on_qr)
+        self.pill.append(self.qr_btn)
+        self._has_qr = shutil.which("qrencode") is not None
+
         self.switch = Gtk.Switch(valign=Gtk.Align.CENTER, tooltip_text="Expose this app")
         self.switch.connect("state-set", self.on_toggle)
         top.append(self.switch)
@@ -172,7 +179,9 @@ class AppRow(Gtk.Box):
         self._mg_key = key
         self.monogram.set_text(initial)
         if self._mg_provider is not None:
-            self.monogram.get_style_context().remove_provider(self._mg_provider)
+            Gtk.StyleContext.remove_provider_for_display(
+                Gdk.Display.get_default(), self._mg_provider
+            )
         if self._mg_class is not None:
             self.monogram.remove_css_class(self._mg_class)
         r, g, b = B.hue_color(app.hue)
@@ -181,24 +190,30 @@ class AppRow(Gtk.Box):
         self._mg_provider.load_from_string(
             f".{self._mg_class} {{ background-color: rgb({r},{g},{b}); }}"
         )
-        self.monogram.get_style_context().add_provider(
-            self._mg_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION
+        Gtk.StyleContext.add_provider_for_display(
+            Gdk.Display.get_default(),
+            self._mg_provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
         )
         self.monogram.add_css_class(self._mg_class)
 
-    def refresh(self, state: B.AppState, tunnel: B.TunnelProc | None):
+    def refresh(self, state: B.AppState, tunnel: dict | None):
         app = state.app
         self._paint_monogram(app)
         self.name_label.set_text(app.name)
         extra = " · start-on-launch" if app.start_on_launch else ""
         self.port_label.set_text(f"localhost:{app.port}{extra}")
         listening = state.listening
-        if tunnel and tunnel.url:
+        status = (tunnel or {}).get("status")
+        if status == "live":
             dot, tip = "●", "live"
             color = "#2ec27e"
-        elif tunnel:
+        elif status == "connecting" or (tunnel and self.app_id in self.win._pending):
             dot, tip = "●", "connecting"
             color = "#e5a50a"
+        elif status == "error":
+            dot, tip = "●", "error"
+            color = "#e5484d"
         elif listening:
             dot, tip = "●", "listening"
             color = "#2ec27e"
@@ -211,29 +226,40 @@ class AppRow(Gtk.Box):
         self.dot.set_markup(f'<span color="{color}">{dot}</span>')
         self.dot.set_tooltip_text(tip)
 
-        live = bool(tunnel and tunnel.url)
-        self._url = tunnel.url if tunnel else None
+        live = status == "live"
+        self._url = B.display_url(app, tunnel)
         self.url_label.set_text(self._url or "")
         self.pill.set_visible(live)
+        self.qr_btn.set_visible(live and self._has_qr)
         self.switch.set_state(live)
         # Block signal feedback while syncing: state-set already returned; use set_active guard.
         self.switch.set_active(live)
 
-        if tunnel and tunnel.url:
+        if live:
+            assert tunnel is not None
             parts = []
-            if tunnel.since:
-                parts.append(B.format_uptime(time.monotonic() - tunnel.since))
-            st = tunnel.stats
-            parts.append(f"{st['active']} open · {st['total']} total")
-            parts.append(f"↓{B.format_bytes(st['bytes_in'])} ↑{B.format_bytes(st['bytes_out'])}")
+            epoch = tunnel.get("live_since_epoch")
+            if epoch:
+                parts.append(B.format_uptime(max(0.0, time.time() - epoch)))
+            st_active = tunnel.get("active_connections", 0)
+            st_total = tunnel.get("total_connections", 0)
+            parts.append(f"{st_active} open · {st_total} total")
+            parts.append(f"↓{B.format_bytes(tunnel.get('bytes_in', 0))} ↑{B.format_bytes(tunnel.get('bytes_out', 0))}")
             self.status_label.set_text(" · ".join(parts))
-        elif tunnel:
-            tail = (tunnel.lines[-1] if tunnel.lines else "connecting…").strip()
-            self.status_label.set_text(tail[-120:])
+        elif status == "error":
+            reason = (tunnel or {}).get("reason") or "tunnel failed"
+            self.status_label.set_text(str(reason)[-140:])
+        elif status == "connecting" or self.app_id in self.win._pending:
+            attempt = (tunnel or {}).get("retry_attempt", 0)
+            self.status_label.set_text(f"connecting… (attempt {attempt})" if attempt else "connecting…")
         elif listening is False:
             self.status_label.set_text(f"Nothing running on :{app.port} - start your dev server first")
         else:
             self.status_label.set_text("")
+
+    def on_qr(self, _btn):
+        if self._url:
+            self.win.show_qr(self.app_id)
 
     def on_toggle(self, switch, value):
         if value:
@@ -334,24 +360,41 @@ class AppEditor(Gtk.Window):
             return self.fail("Port must be a TCP port (1–65535).")
         if not name:
             return self.fail("Name is required.")
-        args = ["--name", name, "--port", str(port)]
-        if pub_t:
-            args += ["--public-port", pub_t]
-        if addr:
-            args += ["--public-address", addr]
-        if self.start_row.get_active():
-            args += ["--start-on-launch"]
-        if self.edit_id:
-            try:
-                B.run_cli("rm", self.edit_id[:8])
-            except Exception as e:
-                return self.fail(str(e))
         try:
-            proc = B.run_cli("add", *args)
+            B.ensure_daemon()
+            if self.edit_id:
+                st = next((s for s in self.win.states if s.app.id == self.edit_id), None)
+                if st is None:
+                    return self.fail("App no longer exists.")
+                app = st.app
+                was_live = bool(self.win.tunnels.get(app.id, {}).get("status") == "live")
+                old_port, old_public = app.port, app.public_port
+                app.name = name
+                app.hue = B.hue_for(name)
+                app.port = port
+                app.public_port = int(pub_t) if pub_t else None
+                app.public_address = addr or None
+                app.start_on_launch = self.start_row.get_active()
+                reply = B.daemon_call("update", app=app.__dict__)
+                if was_live and (app.port != old_port or app.public_port != old_public):
+                    B.daemon_call("stop", id=app.id)
+            else:
+                import uuid as _uuid
+
+                app = B.SavedApp(
+                    id=str(_uuid.uuid4()),
+                    name=name,
+                    port=port,
+                    start_on_launch=self.start_row.get_active(),
+                    hue=B.hue_for(name),
+                    public_port=int(pub_t) if pub_t else None,
+                    public_address=addr or None,
+                )
+                reply = B.daemon_call("add", app=app.__dict__)
+            if not reply.get("ok"):
+                return self.fail(str(reply.get("error") or "Could not save."))
         except Exception as e:
             return self.fail(str(e))
-        if proc.returncode != 0:
-            return self.fail((proc.stderr or proc.stdout).strip() or "Could not save.")
         self.win.toast("App saved")
         self.destroy()
         self.win.refresh_soon()
@@ -361,7 +404,13 @@ class MainWindow(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application):
         super().__init__(application=app, title="Localfly Linux")
         self.set_default_size(900, 600)
-        self.tunnels: dict[str, B.TunnelProc] = {}
+        # Live tunnel info dicts from the daemon, keyed by app id.
+        self.tunnels: dict[str, dict] = {}
+        # Ids with a start request in flight (shown as connecting).
+        self._pending: set[str] = set()
+        # For desktop notifications on transitions.
+        self._notified_live: set[str] = set()
+        self._notified_err: dict[str, str] = {}
         self.states: list[B.AppState] = []
         self.detected: list[int] = []
         self.page = "apps"
@@ -369,6 +418,9 @@ class MainWindow(Adw.ApplicationWindow):
         self._refresh_lock = threading.Lock()
         self._refresh_pending = False
         self._relay = "bore.pub"
+        self._relay_ms: float | None = None
+        self._relay_ms_at: float = 0.0
+        self._scan_tick = 0
 
         css()
         self.toast_overlay = Adw.ToastOverlay()
@@ -758,32 +810,81 @@ class MainWindow(Adw.ApplicationWindow):
         return True  # keep timer
 
     def _refresh_bg(self):
+        daemon_error = None
         try:
-            apps = B.list_apps()
-        except Exception:
-            apps = []
-        states = []
-        for app in apps:
-            states.append(B.AppState(app=app, listening=B.probe_tcp(app.port)))
-        try:
-            found = B.scan()
-        except Exception:
-            found = []
+            states = self._daemon_snapshot()
+        except Exception as e:
+            import traceback
+
+            traceback.print_exc()
+            states = []
+            self._last_refresh_error = str(e)[:200]
+            daemon_error = str(e)[:120]
+        self._scan_tick += 1
+        if self._scan_tick % 5 == 1:
+            try:
+                found = B.scan()
+            except Exception:
+                found = []
+            self._scan_cache = found
+        found = getattr(self, "_scan_cache", [])
         cfg = B.load_effective_config()
         relay = str(cfg.get("relay") or "bore.pub")
-        GLib.idle_add(self._apply_refresh, states, found, relay)
+        # Relay latency, cached 20 s like the macOS poller.
+        now = time.monotonic()
+        if now - self._relay_ms_at > 20:
+            try:
+                self._relay_ms = B.relay_latency_ms(relay, timeout=2.0)
+            except Exception:
+                self._relay_ms = None
+            self._relay_ms_at = now
+        latency = self._relay_ms
+        GLib.idle_add(self._apply_refresh, states, found, relay, latency, daemon_error)
         with self._refresh_lock:
             self._refresh_pending = False
 
-    def _apply_refresh(self, states, found, relay):
+    def _daemon_snapshot(self) -> list[B.AppState]:
+        """One daemon round-trip gives apps + liveness + tunnel state."""
+        B.ensure_daemon()
+        reply = B.daemon_call("list", timeout=15)
+        out = []
+        tunnels = {}
+        for item in reply.get("apps", []) or []:
+            app_d = item.get("app", {})
+            app = B.SavedApp(
+                id=str(app_d.get("id", "")),
+                name=str(app_d.get("name", "")),
+                port=int(app_d.get("port", 0)),
+                start_on_launch=bool(app_d.get("start_on_launch", False)),
+                hue=app_d.get("hue"),
+                public_port=app_d.get("public_port"),
+                public_address=app_d.get("public_address"),
+            )
+            out.append(B.AppState(app=app, listening=item.get("listening")))
+            if item.get("tunnel"):
+                tunnels[app.id] = item["tunnel"]
+        # Stash tunnels for tray + notifications.
+        self._tunnel_map = tunnels
+        return out
+
+    def _apply_refresh(self, states, found, relay, latency, daemon_error=None):
         self.states = states
         self.detected = found or []
         self._relay = relay
-        live = sum(1 for t in self.tunnels.values() if t.url)
-        self.live_badge.set_text(f"{live} live" if live else "")
+        tunnels = getattr(self, "_tunnel_map", {})
+        self.tunnels = {k: v for k, v in tunnels.items() if v and v.get("status") in ("live", "connecting", "error")}
+        live_ids = {k for k, v in self.tunnels.items() if v.get("status") == "live"}
+        self._notify_transitions(live_ids)
+        self.live_badge.set_text(f"{len(live_ids)} live" if live_ids else "")
         n = len(states)
         summary = "Nothing saved yet." if n == 0 else ("One app saved:" if n == 1 else f"{n} apps saved:")
-        self.summary_label.set_text(f"{summary}  via {relay}")
+        if daemon_error:
+            via = f"{summary}  daemon unreachable ({daemon_error})"
+        elif latency is None:
+            via = f"{summary}  via {relay} (unreachable)"
+        else:
+            via = f"{summary}  via {relay} · {latency:.0f} ms"
+        self.summary_label.set_text(via)
         self.empty_box.set_visible(n == 0)
 
         seen = set()
@@ -810,102 +911,95 @@ class MainWindow(Adw.ApplicationWindow):
         self.update_tray_menu()
         return False
 
+    def _notify_transitions(self, live_ids: set[str]):
+        new_live = live_ids - self._notified_live
+        gone = self._notified_live - live_ids
+        for app_id in new_live:
+            st = next((s for s in self.states if s.app.id == app_id), None)
+            if st is None:
+                continue
+            url = B.display_url(st.app, self.tunnels.get(app_id)) or ""
+            self.notify(f"{st.app.name} is live", url or "tunnel is up")
+        for app_id in gone:
+            self._notified_err.pop(app_id, None)
+        self._notified_live = set(live_ids)
+        # Errors worth surfacing once per message.
+        for app_id, tun in self.tunnels.items():
+            if isinstance(tun, dict) and tun.get("status") == "error":
+                reason = str(tun.get("reason") or "tunnel failed")
+                if self._notified_err.get(app_id) != reason:
+                    self._notified_err[app_id] = reason
+                    st = next((s for s in self.states if s.app.id == app_id), None)
+                    name = st.app.name if st else "App"
+                    self.notify(f"{name} tunnel failed", reason[-140:])
+
+    def notify(self, title: str, body: str):
+        try:
+            note = Gio.Notification.new(title)
+            note.set_body(body)
+            note.set_icon(Gio.ThemedIcon.new("localfly"))
+            self.get_application().send_notification("localfly-tunnel", note)
+        except Exception:
+            pass
+
     def _on_quick_add(self, _btn, port):
         self.open_editor(None, preset_port=port)
 
-    # ----- tunnels -----
+    # ----- tunnels (all owned by localflyd; the GUI only asks) -----
     def start_tunnel(self, app_id):
-        if app_id in self.tunnels:
+        if app_id in self._pending:
             return
         st = next((s for s in self.states if s.app.id == app_id), None)
         if st and st.listening is False:
             self.toast(f"Nothing running on :{st.app.port} - start your dev server first")
             self.refresh_soon()
             return
-        try:
-            proc = subprocess.Popen(
-                [B.find_binary(), "on", app_id[:8]],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1,
-            )
-        except OSError as e:
-            self.toast(f"Could not start tunnel: {e}")
-            return
-        tun = B.TunnelProc(app_id=app_id, proc=proc)
-        self.tunnels[app_id] = tun
-        threading.Thread(target=self._watch_tunnel, args=(tun,), daemon=True).start()
+        self._pending.add(app_id)
         self.refresh_soon()
+        threading.Thread(target=self._start_bg, args=(app_id,), daemon=True).start()
+
+    def _start_bg(self, app_id):
+        try:
+            B.ensure_daemon()
+            st = next((s for s in self.states if s.app.id == app_id), None)
+            if st is None:
+                return
+            options = B.effective_options()
+            B.daemon_call(
+                "start", timeout=30, id=app_id,
+                local_port=st.app.port,
+                remote_port=st.app.public_port or 0,
+                options=options,
+            )
+        except Exception as e:
+            self.toast(f"Could not start tunnel: {e}")
+        finally:
+            self._pending.discard(app_id)
+            GLib.idle_add(self._idle_refresh)
 
     def _idle_refresh(self):
         self.refresh_soon()
         return False
 
-    def _mark_live(self, tun: B.TunnelProc, url: str):
-        if tun.url is None:
-            tun.url = url
-            tun.since = time.monotonic()
+    def stop_tunnel(self, app_id):
+        self._pending.discard(app_id)
+        threading.Thread(target=self._stop_bg, args=(app_id,), daemon=True).start()
+        self.refresh_soon()
+
+    def _stop_bg(self, app_id):
+        try:
+            B.ensure_daemon()
+            B.daemon_call("stop", id=app_id)
+        except Exception:
+            pass
         GLib.idle_add(self._idle_refresh)
 
-    def _watch_stderr(self, tun: B.TunnelProc):
-        assert tun.proc.stderr is not None
-        for line in tun.proc.stderr:
-            text = line.strip()
-            if not text:
-                continue
-            stats = B.parse_stats_line(text)
-            if stats:
-                tun.stats.update(stats)
-                GLib.idle_add(self._idle_refresh)
-                continue
-            m = re.match(r"^live (\S+)", text)
-            if m:
-                self._mark_live(tun, m.group(1))
-                continue
-            if len(tun.lines) < 8:
-                tun.lines.append(text[-200:])
-                GLib.idle_add(self._idle_refresh)
-
-    def _watch_tunnel(self, tun: B.TunnelProc):
-        assert tun.proc.stdout is not None and tun.proc.stderr is not None
-        threading.Thread(target=self._watch_stderr, args=(tun,), daemon=True).start()
-        for line in tun.proc.stdout:
-            parsed = B.parse_live_line(line.strip())
-            if parsed:
-                self._mark_live(tun, parsed[1])
-        # stdout closed when the process ends; the stderr thread drains the rest.
-        tun.proc.wait()
-        # If still registered, the tunnel died on its own: keep record for error display briefly.
-        GLib.idle_add(self._tunnel_exited, tun.app_id)
-
-    def _tunnel_exited(self, app_id):
-        tun = self.tunnels.get(app_id)
-        if tun and tun.proc.poll() is not None and not tun.url:
-            # First attempt failed and no auto-reconnect output followed: drop and show error.
-            msg = (tun.lines[-1] if tun.lines else "tunnel exited").strip()
-            del self.tunnels[app_id]
-            self.toast(msg[-140:])
-        self.refresh_soon()
-        return False
-
-    def stop_tunnel(self, app_id):
-        tun = self.tunnels.pop(app_id, None)
-        if tun and tun.proc.poll() is None:
-            tun.proc.terminate()
-            threading.Thread(target=self._kill_after, args=(tun,), daemon=True).start()
-        self.refresh_soon()
-
-    @staticmethod
-    def _kill_after(tun: B.TunnelProc):
-        try:
-            tun.proc.wait(timeout=5)
-        except Exception:
-            try:
-                tun.proc.kill()
-            except Exception:
-                pass
-
     def stop_all_tunnels(self):
-        for app_id in list(self.tunnels):
-            self.stop_tunnel(app_id)
+        try:
+            B.ensure_daemon()
+            B.daemon_call("stop_all")
+        except Exception:
+            pass
 
     # ----- app actions -----
     def open_editor(self, app_id: str | None, preset_port: int | None = None):
@@ -929,7 +1023,10 @@ class MainWindow(Adw.ApplicationWindow):
             if resp == "delete":
                 self.stop_tunnel(app_id)
                 try:
-                    B.run_cli("rm", app_id[:8])
+                    B.ensure_daemon()
+                    reply = B.daemon_call("remove", id=app_id)
+                    if not reply.get("ok"):
+                        raise RuntimeError(str(reply.get("error") or "remove failed"))
                 except Exception as e:
                     self.toast(f"Delete failed: {e}")
                 else:
@@ -947,7 +1044,9 @@ class MainWindow(Adw.ApplicationWindow):
         try:
             # Official logo when installed in the icon theme, generic otherwise.
             theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default())
-            icon = "localfly" if theme.has_icon("localfly") else "network-transmit-receive"
+            self._has_tray_icon = bool(theme and theme.has_icon("localfly"))
+            self._has_tray_live_icon = bool(theme and theme.has_icon("localfly-live"))
+            icon = "localfly" if self._has_tray_icon else "network-transmit-receive"
             self.tray = Tray(on_show_menu=self.show_from_tray, icon_name=icon)
         except GLib.Error:
             self.tray = None
@@ -972,14 +1071,19 @@ class MainWindow(Adw.ApplicationWindow):
     def update_tray_menu(self):
         if not getattr(self, "tray", None):
             return
-        live = sum(1 for t in self.tunnels.values() if t.url)
+        live_ids = {k for k, v in self.tunnels.items() if v.get("status") == "live"}
         total = len(self.states)
-        items = [MenuItem(id=1, label=f"Localfly Linux - {live}/{total} live", enabled=False)]
+        # Green-dot icon while anything is live (falls back if theme lacks it).
+        base = "localfly" if self._has_tray_icon else "network-transmit-receive"
+        icon = "localfly-live" if (live_ids and self._has_tray_live_icon) else base
+        if icon != getattr(self.tray, "icon_name", None):
+            self.tray.set_icon(icon)
+        items = [MenuItem(id=1, label=f"Localfly Linux - {len(live_ids)}/{total} live", enabled=False)]
         next_id = 10
         self._tray_app_ids = {}
         for st in self.states:
             app = st.app
-            on = bool(self.tunnels.get(app.id) and self.tunnels[app.id].url)
+            on = app.id in live_ids
             iid = next_id
             next_id += 1
             self._tray_app_ids[iid] = app.id
@@ -992,18 +1096,62 @@ class MainWindow(Adw.ApplicationWindow):
         items.append(MenuItem(id=10001, label="Quit Localfly Linux", on_clicked=self.quit_app))
         self.tray.set_menu(
             items,
-            status="Active" if live else "Active",
-            tooltip=f"{live}/{total} tunnels live",
+            status="Active",
+            tooltip=f"{len(live_ids)}/{total} tunnels live",
         )
 
     def _tray_toggle_cb(self, app_id):
         def cb():
-            if app_id in self.tunnels:
+            tun = self.tunnels.get(app_id)
+            if isinstance(tun, dict) and tun.get("status") in ("live", "connecting"):
                 self.stop_tunnel(app_id)
             else:
                 self.start_tunnel(app_id)
 
         return cb
+
+    def show_qr(self, app_id):
+        st = next((s for s in self.states if s.app.id == app_id), None)
+        url = B.display_url(st.app, self.tunnels.get(app_id)) if st else None
+        if not url:
+            self.toast("No live URL to encode")
+            return
+        path = os.path.join(tempfile.gettempdir(), f"localfly-qr-{app_id[:8]}.png")
+        if not B.qrencode_png(url, path):
+            self.toast("QR needs the qrencode tool installed")
+            return
+        dlg = Gtk.Window(title=f"QR - {st.app.name if st else 'tunnel'}", transient_for=self, modal=True)
+        dlg.set_default_size(300, 360)
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=10)
+        box.set_margin_top(18)
+        box.set_margin_bottom(18)
+        box.set_margin_start(18)
+        box.set_margin_end(18)
+        dlg.set_child(box)
+        pic = Gtk.Picture.new_for_filename(path)
+        pic.set_size_request(240, 240)
+        box.append(pic)
+        link = Gtk.Label(label=url, selectable=True, wrap=True, xalign=0.5)
+        link.add_css_class("localfly-pill-label")
+        box.append(link)
+        row = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=8)
+        row.set_halign(Gtk.Align.CENTER)
+        box.append(row)
+        copy = Gtk.Button(label="Copy URL")
+        copy.connect("clicked", lambda *_: (self.get_clipboard().set(url), self.toast("Public URL copied")))
+        row.append(copy)
+        close = Gtk.Button(label="Close")
+        close.connect("clicked", lambda *_: dlg.destroy())
+        row.append(close)
+
+        def _cleanup(*_args):
+            try:
+                os.remove(path)
+            except OSError:
+                pass
+
+        dlg.connect("close-request", _cleanup)
+        dlg.present()
 
     # ----- window lifecycle -----
     def on_close_request(self, _win):

@@ -79,24 +79,21 @@ def run_cli(*args: str, timeout: int = 15) -> subprocess.CompletedProcess:
 
 
 def list_apps() -> list[SavedApp]:
-    proc = run_cli("list", "--json")
-    if proc.returncode != 0:
-        raise RuntimeError(proc.stderr.strip() or "localfly list failed")
-    try:
-        raw = json.loads(proc.stdout or "[]")
-    except json.JSONDecodeError as e:
-        raise RuntimeError(f"could not parse localfly list output: {e}")
+    """Saved apps via the daemon (single source of truth; spawns it if needed)."""
+    ensure_daemon()
+    reply = daemon_call("list", timeout=15)
     apps = []
-    for item in raw:
+    for item in reply.get("apps", []) or []:
+        app = item.get("app", {})
         apps.append(
             SavedApp(
-                id=str(item.get("id", "")),
-                name=str(item.get("name", "")),
-                port=int(item.get("port", 0)),
-                start_on_launch=bool(item.get("start_on_launch", False)),
-                public_port=item.get("public_port"),
-                public_address=item.get("public_address"),
-                hue=item.get("hue"),
+                id=str(app.get("id", "")),
+                name=str(app.get("name", "")),
+                port=int(app.get("port", 0)),
+                start_on_launch=bool(app.get("start_on_launch", False)),
+                public_port=app.get("public_port"),
+                public_address=app.get("public_address"),
+                hue=app.get("hue"),
             )
         )
     return apps
@@ -208,6 +205,14 @@ def format_uptime(seconds: float) -> str:
     return f"{s // 3600}h"
 
 
+def hue_for(name: str) -> float:
+    """Stable 0..1 hue for a name (djb2, mirrors the Rust core)."""
+    h = 5381
+    for b in name.lower().encode("utf-8"):
+        h = ((h << 5) + h + b) & 0xFFFFFFFF
+    return (h % 360) / 360.0
+
+
 def hue_color(hue: float | None) -> tuple[int, int, int]:
     """Pastel tile color from the app's stable hue (like macOS monograms)."""
     import colorsys
@@ -221,7 +226,7 @@ def hue_color(hue: float | None) -> tuple[int, int, int]:
 
 
 def parse_live_line(line: str) -> tuple[str, str] | None:
-    """Parse `web live: localhost:3000 -> http://127.0.0.1:41234`."""
+    """Parse `web live: localhost:3000 -> http://127.0.0.1:41234` (CLI output)."""
     if " live: " not in line or " -> " not in line:
         return None
     left, url = line.split(" -> ", 1)
@@ -230,6 +235,242 @@ def parse_live_line(line: str) -> tuple[str, str] | None:
     if not url or not name:
         return None
     return name, url
+
+
+def socket_path() -> str:
+    """Mirror of Rust daemon::socket_path + LOCALFLY_SOCKET override."""
+    override = os.environ.get("LOCALFLY_SOCKET")
+    if override and override.strip():
+        return override
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime and runtime.strip():
+        return os.path.join(runtime, "localfly.sock")
+    import tempfile
+
+    return os.path.join(tempfile.gettempdir(), "localfly.sock")
+
+
+def display_url(app: "SavedApp", tunnel: dict | None) -> str | None:
+    """Public URL, preferring a self-hosted Caddy address like the CLI does."""
+    if not tunnel or tunnel.get("status") != "live":
+        return None
+    if app.public_address:
+        return app.public_address
+    host = tunnel.get("relay_host")
+    port = tunnel.get("remote_port")
+    if host and port:
+        return f"http://{host}:{port}"
+    return None
+
+
+def parse_relay(relay: str) -> tuple[str, int]:
+    """Split `host` or `host:port` (control port, default 7835)."""
+    text = (relay or "").strip()
+    if ":" in text:
+        host, _, tail = text.rpartition(":")
+        try:
+            return host or "bore.pub", int(tail)
+        except ValueError:
+            pass
+    return (text or "bore.pub"), 7835
+
+
+def relay_latency_ms(relay: str, timeout: float = 2.0) -> float | None:
+    """TCP connect time to the relay control port in ms, or None."""
+    import socket as _socket
+    import time as _time
+
+    host, port = parse_relay(relay)
+    start = _time.monotonic()
+    for family in (_socket.AF_INET, _socket.AF_INET6):
+        try:
+            infos = _socket.getaddrinfo(host, port, family, _socket.SOCK_STREAM)
+        except OSError:
+            continue
+        for info in infos:
+            try:
+                with _socket.socket(info[0], info[1], info[2]) as s:
+                    s.settimeout(timeout)
+                    s.connect(info[4])
+                    return ( _time.monotonic() - start) * 1000.0
+            except OSError:
+                continue
+    return None
+
+
+def read_secret() -> str:
+    """Relay secret: env wins, then the 0600 file (Rust also mirrors keyring)."""
+    env = os.environ.get("LOCALFLY_SECRET")
+    if env:
+        return env
+    try:
+        with open(os.path.join(config_dir(), "secret"), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
+def effective_options(auto_reconnect_default: bool = True) -> dict:
+    """Tunnel options for daemon start, mirroring the CLI's effective_* logic."""
+    cfg = load_effective_config()
+    relay = os.environ.get("LOCALFLY_RELAY") or cfg.get("relay") or "bore.pub"
+    secret = read_secret() or None
+    local_host = cfg.get("local_host") or "localhost"
+    auto = cfg.get("auto_reconnect", auto_reconnect_default)
+    auto = bool(auto) if isinstance(auto, bool) else auto_reconnect_default
+    return {
+        "relay": relay,
+        "secret": secret,
+        "local_host": local_host,
+        "auto_reconnect": auto,
+    }
+
+
+def qrencode_png(url: str, out_path: str, size: int = 6) -> bool:
+    """Render url as QR via the `qrencode` CLI. False when unavailable."""
+    import subprocess as _subprocess
+
+    if not shutil.which("qrencode"):
+        return False
+    try:
+        r = _subprocess.run(
+            ["qrencode", "-o", out_path, "-s", str(size), "-m", "2", url],
+            timeout=10,
+            capture_output=True,
+        )
+        return r.returncode == 0 and os.path.isfile(out_path)
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def _send_recv(payload: dict, timeout: int = 20) -> dict:
+    import json
+    import socket as _socket
+
+    data = (json.dumps(payload) + "\n").encode()
+    with _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM) as s:
+        s.settimeout(timeout)
+        s.connect(socket_path())
+        s.sendall(data)
+        chunks = []
+        while True:
+            part = s.recv(65536)
+            if not part:
+                break
+            chunks.append(part)
+            if b"\n" in part:
+                break
+        raw = b"".join(chunks).decode("utf-8", "replace").strip().splitlines()
+        if not raw:
+            raise ConnectionError("empty reply from localflyd")
+        reply = json.loads(raw[0])
+        if not isinstance(reply, dict):
+            raise ConnectionError("bad reply from localflyd")
+        return reply
+
+
+def _localflyd_candidates() -> list:
+    cands = []
+    try:
+        exe = find_binary()
+        exe_dir = os.path.dirname(os.path.realpath(exe))
+        sib = os.path.join(exe_dir, "localflyd")
+        cands.append(sib)
+    except Exception:
+        pass
+    here = os.path.dirname(os.path.realpath(__file__))
+    repo = os.path.dirname(here)
+    cands.append(os.path.join(repo, "target", "debug", "localflyd"))
+    cands.append(os.path.join(repo, "target", "release", "localflyd"))
+    which = shutil.which("localflyd")
+    if which:
+        cands.append(which)
+    return cands
+
+
+def ensure_daemon(timeout: float = 5.0) -> None:
+    """Ping the daemon; spawn a detached one if nothing answers."""
+    import socket as _socket
+    import subprocess
+    import time
+
+    try:
+        reply = _send_recv({"cmd": "ping"}, timeout=2)
+        if reply.get("ok"):
+            return
+    except (OSError, ConnectionError, ValueError):
+        pass
+    binary = next(
+        (c for c in _localflyd_candidates() if os.path.isfile(c) and os.access(c, os.X_OK)),
+        "",
+    )
+    if not binary:
+        raise ConnectionError("localflyd not found (reinstall Localfly Linux)")
+    try:
+        subprocess.Popen(
+            [binary],
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except OSError as e:
+        raise ConnectionError(f"cannot start localflyd: {e}")
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            reply = _send_recv({"cmd": "ping"}, timeout=2)
+            if reply.get("ok"):
+                return
+        except (OSError, ConnectionError, ValueError):
+            time.sleep(0.1)
+    raise ConnectionError("localflyd did not come up")
+
+
+def daemon_call(cmd: str, timeout: int = 20, **fields) -> dict:
+    """One request (auto-spawns the daemon). Raises on transport or daemon error."""
+    ensure_daemon()
+    payload = {"cmd": cmd, **fields}
+    reply = _send_recv(payload, timeout=timeout)
+    if not reply.get("ok", False):
+        raise RuntimeError(reply.get("error") or "daemon refused the request")
+    return reply
+
+
+def subscribe_lines(timeout: int = 10):
+    """Yield parsed {"info": ...} dicts until the server closes the stream."""
+    import json
+    import socket as _socket
+
+    ensure_daemon()
+    data = (json.dumps({"cmd": "subscribe"}) + "\n").encode()
+    s = _socket.socket(_socket.AF_UNIX, _socket.SOCK_STREAM)
+    s.settimeout(timeout)
+    try:
+        s.connect(socket_path())
+        s.sendall(data)
+        buf = b""
+        while True:
+            part = s.recv(65536)
+            if not part:
+                return
+            buf += part
+            while b"\n" in buf:
+                line, buf = buf.split(b"\n", 1)
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    msg = json.loads(line.decode("utf-8", "replace"))
+                except ValueError:
+                    continue
+                if isinstance(msg, dict) and "info" in msg:
+                    yield msg["info"]
+    finally:
+        try:
+            s.close()
+        except OSError:
+            pass
 
 
 @dataclass

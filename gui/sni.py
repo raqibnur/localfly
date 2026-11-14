@@ -161,6 +161,12 @@ class Tray:
             self.registered = False
 
     # ----- public -----
+    def set_icon(self, icon_name: str) -> None:
+        """Swap the tray icon (e.g. live indicator) and poke renderers."""
+        if icon_name == self.icon_name:
+            return
+        self.icon_name = icon_name
+        self._emit_sni("NewIcon")
     def set_menu(self, items: list[MenuItem], status: str = "Active",
                  tooltip: str = "") -> None:
         self.items = items
