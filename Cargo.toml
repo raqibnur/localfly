@@ -1,0 +1,29 @@
+[package]
+name = "localfly"
+version = "0.1.0"
+edition = "2021"
+description = "Localfly for Linux: expose localhost over bore tunnels (port of the macOS app)"
+license = "MIT"
+
+[lib]
+name = "localfly_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "localfly"
+path = "src/main.rs"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+hmac = "0.12"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4", "serde"] }
+dirs = "6"
+
+[dev-dependencies]
+anyhow = "1.0.104"
+serial_test = "4.0.1"
+tokio = { version = "1", features = ["full"] }

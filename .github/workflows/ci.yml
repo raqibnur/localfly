@@ -7,17 +7,14 @@ on:
 
 jobs:
   test:
-    runs-on: macos-15
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Install bore for integration tests
         run: |
-          curl -sSL https://github.com/ekzhang/bore/releases/download/v0.6.0/bore-v0.6.0-aarch64-apple-darwin.tar.gz | sudo tar -xz -C /usr/local/bin bore
+          curl -sSL https://github.com/ekzhang/bore/releases/download/v0.6.0/bore-v0.6.0-x86_64-unknown-linux-gnu.tar.gz | sudo tar -xz -C /usr/local/bin bore
           bore --version
-      - name: Test LocalflyCore
-        run: swift test --package-path LocalflyCore
-      - name: Build app
-        run: |
-          brew install xcodegen
-          xcodegen generate
-          xcodebuild -project Localfly.xcodeproj -scheme Localfly -configuration Debug CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Test
+        run: cargo test --locked
+      - name: Build
+        run: cargo build --locked

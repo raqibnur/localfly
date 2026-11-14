@@ -1,11 +1,4 @@
-build/
-dist/
-.build/
-LocalflyCore/.build/
-Localfly.xcodeproj/
-*.xcuserstate
-.DS_Store
-.claude/settings.local.json
+/target/
 # Private business notes; not part of the open-source repo.
 docs/ROADMAP.md
 deploy/.env

@@ -1,0 +1,13 @@
+[Unit]
+Description=Localfly — expose saved localhost apps via bore
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Runs every app marked start-on-launch in the foreground; Ctrl-C/stop ends all tunnels.
+ExecStart=%h/.cargo/bin/localfly up
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

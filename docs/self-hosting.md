@@ -40,9 +40,13 @@ docker compose up -d
 
 ## 4. Connect Localfly
 
-1. **Relay**: set **Server** to your domain or the server's IP, and set **Secret** to the `BORE_SECRET` from `.env`.
-2. For each app, choose **Edit…**, set **Public port** to the port in its Caddy block (e.g. `40001`), and set **Address** to `https://web.yourdomain.com`.
-3. Turn the app on. The lock icon and your address appear when it's live.
+```bash
+localfly config --relay yourdomain.com --secret "$(grep BORE_SECRET .env | cut -d= -f2)"
+localfly edit web --public-port 40001 --public-address https://web.yourdomain.com
+localfly on web
+```
+
+For each app, set **public port** to the port in its Caddy block (e.g. `40001`) and **public address** to `https://web.yourdomain.com`. The public URL prints when the tunnel is live.
 
 ## Without HTTPS
 
@@ -67,7 +71,7 @@ Then install [Caddy](https://caddyserver.com/docs/install) with the same `Caddyf
 | Localfly says | Meaning |
 |---|---|
 | Couldn’t reach relay | Port 7835 is blocked, or the server address is wrong. |
-| This relay requires a secret | Enter the secret under **Relay**. |
-| Relay didn’t ask for a secret | The relay runs without `BORE_SECRET`; clear the secret in Localfly. |
+| This relay requires a secret | Set it with `localfly config --secret …`. |
+| Relay didn’t ask for a secret | The relay runs without `BORE_SECRET`; clear it with `localfly config --secret ""`. |
 | Relay refused the tunnel: port already in use | Another tunnel holds that public port. |
 | Relay refused the tunnel: client port number not in allowed range | Pick a public port between MIN_PORT and MAX_PORT. |

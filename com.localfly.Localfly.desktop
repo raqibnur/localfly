@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Localfly
+Comment=Your localhost, on the internet
+Exec=localfly list
+Terminal=true
+Categories=Development;Network;
+Keywords=tunnel;localhost;bore;expose;
