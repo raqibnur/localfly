@@ -827,7 +827,7 @@ class MainWindow(Adw.ApplicationWindow):
         )
 
     def _tray_toggle_cb(self, app_id):
-        def cb(_mi):
+        def cb():
             if app_id in self.tunnels:
                 self.stop_tunnel(app_id)
             else:
