@@ -3,6 +3,7 @@ Type=Application
 Name=Localfly
 Comment=Your localhost, on the internet
 Exec=localfly-gui
+Icon=localfly
 Terminal=false
 Categories=Development;Network;
 Keywords=tunnel;localhost;bore;expose;

@@ -20,22 +20,25 @@ By default it uses **bore.pub**, a free public relay. For stable `https://` addr
 
 ## Install
 
-Prebuilt Linux binaries (x86_64 + aarch64) are attached to each GitHub release
-(`localfly-vX.Y.Z-<target>.tar.gz`, built by `.github/workflows/release.yml`):
+One-liner (user-local, no root):
 
 ```bash
-tar -xzf localfly-v0.1.0-x86_64-unknown-linux-gnu.tar.gz
-sudo install -m755 localfly-*/localfly /usr/local/bin/
+curl -fsSL https://raw.githubusercontent.com/9M2PJU/localfly-linux/main/install.sh | sh
 ```
 
-Or build from source:
+Or pick your distro:
 
-```bash
-cargo install --path .
-# binary: ~/.cargo/bin/localfly
-```
+| Method | Command |
+|---|---|
+| Arch (AUR, prebuilt) | `yay -S localfly-linux-bin` (or `localfly-linux-git` to build from source) |
+| Debian/Ubuntu (.deb) | download `localfly-linux_*.deb` from [releases](https://github.com/9M2PJU/localfly-linux/releases) then `sudo apt install ./localfly-linux_*.deb` |
+| Fedora/RHEL (.rpm) | download `localfly-linux-*.rpm` from [releases](https://github.com/9M2PJU/localfly-linux/releases) then `sudo dnf install ./localfly-linux-*.rpm` |
+| Any distro (AppImage) | download `Localfly-*.AppImage` from [releases](https://github.com/9M2PJU/localfly-linux/releases), `chmod +x`, run |
+| From source | `cargo install --path .` |
 
-Requires a C toolchain + cargo (Arch: `pacman -S rust`; Debian: `apt install cargo`).
+Requires a C toolchain + cargo for source builds (Arch: `pacman -S rust`; Debian: `apt install cargo`).
+The GUI additionally needs `python3-gi` + GTK4 + libadwaita
+(Arch: `python-gobject gtk4 libadwaita`; Debian: `python3-gi gir1.2-gtk-4.0 gir1.2-adw-1`).
 
 ## GUI (window + tray)
 

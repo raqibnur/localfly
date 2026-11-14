@@ -1,0 +1,59 @@
+name: localfly-linux
+arch: "${ARCH}"
+version: 0.1.0
+release: 1
+maintainer: 9M2PJU
+description: Your localhost, on the internet — bore tunnels with an Adwaita window + tray
+homepage: https://hamradio.my
+license: MIT
+section: net
+priority: optional
+vendor: 9M2PJU
+
+overrides:
+  deb:
+    depends:
+      - python3-gi
+      - gir1.2-gtk-4.0
+      - gir1.2-adw-1
+      - curl
+  rpm:
+    depends:
+      - python3-gobject
+      - gtk4
+      - libadwaita
+      - curl
+
+contents:
+  - src: target/release/localfly
+    dst: /usr/bin/localfly
+    type: file
+    file_info: { mode: 0755 }
+  - src: gui/localfly-gui
+    dst: /usr/bin/localfly-gui
+    type: file
+    file_info: { mode: 0755 }
+  - src: gui/localfly_backend.py
+    dst: /usr/share/localfly/gui/localfly_backend.py
+    type: file
+    file_info: { mode: 0644 }
+  - src: gui/localfly_gui.py
+    dst: /usr/share/localfly/gui/localfly_gui.py
+    type: file
+    file_info: { mode: 0644 }
+  - src: gui/sni.py
+    dst: /usr/share/localfly/gui/sni.py
+    type: file
+    file_info: { mode: 0644 }
+  - src: com.localfly.Localfly.desktop
+    dst: /usr/share/applications/com.localfly.Localfly.desktop
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/icons/localfly.png
+    dst: /usr/share/icons/hicolor/256x256/apps/localfly.png
+    type: file
+    file_info: { mode: 0644 }
+  - src: packaging/localfly.service
+    dst: /usr/lib/systemd/user/localfly.service
+    type: file
+    file_info: { mode: 0644 }
